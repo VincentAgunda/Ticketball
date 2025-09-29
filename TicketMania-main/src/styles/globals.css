@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #ffffff; /* pure white background */
+    color: #0b1b32; /* brand-navy for text */
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-navy text-brand-white px-6 py-3 rounded-lg font-semibold 
+           hover:bg-opacity-90 transition-colors 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-light text-brand-navy px-6 py-3 rounded-lg font-semibold 
+           hover:bg-brand-beige transition-colors 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white px-6 py-3 rounded-lg font-semibold 
+           hover:bg-red-700 transition-colors 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6;
+  }
+  
+  .admin-card {
+    @apply bg-white rounded-xl shadow-md p-6 border border-brand-light;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-brand-gray rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-brand-navy 
+           focus:border-transparent;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #0b1b32 0%, #032f30 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}

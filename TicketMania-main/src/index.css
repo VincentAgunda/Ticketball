@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #ffffff; /* clean Apple-style white */
+    color: #0b1b32; /* dark navy text */
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-navy text-brand-white px-5 py-2.5 rounded-xl font-medium 
+           shadow-soft hover:bg-opacity-90 transition-all;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-light text-brand-navy px-5 py-2.5 rounded-xl font-medium 
+           shadow-subtle hover:bg-brand-beige transition-all;
+  }
+
+  .card {
+    @apply bg-brand-white rounded-2xl shadow-soft p-6 border border-brand-gray/30;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-brand-gray rounded-xl 
+           focus:outline-none focus:ring-2 focus:ring-brand-navy;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #0b1b32 0%, #dee0e0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
