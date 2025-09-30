@@ -19,7 +19,7 @@ const TicketQR = ({
 }) => {
   if (!ticket) {
     return (
-      <div className="text-center p-8 text-dark-gray">
+      <div className="text-center p-8 text-gray-200">
         <ConfirmationNumber className="h-16 w-16 mx-auto mb-4" />
         <p>No ticket data available</p>
       </div>
@@ -30,11 +30,11 @@ const TicketQR = ({
     id, 
     seat_number, 
     price, 
-    matches,
+    match,
     user_id 
   } = ticket
 
-  const qrData = generateQRData(id, matches?.id, seat_number)
+  const qrData = generateQRData(id, match?.id, seat_number)
 
   const handleDownload = () => {
     if (onDownload) {
@@ -42,28 +42,53 @@ const TicketQR = ({
       return
     }
 
-    // Default download behavior
-    const canvas = document.querySelector('canvas')
-    if (canvas) {
-      const pngUrl = canvas.toDataURL('image/png')
-      const downloadLink = document.createElement('a')
-      downloadLink.href = pngUrl
-      downloadLink.download = `ticket-${id}.png`
-      document.body.appendChild(downloadLink)
-      downloadLink.click()
-      document.body.removeChild(downloadLink)
+    // Create a high-quality PNG of the entire ticket
+    const ticketElement = document.querySelector(`[data-ticket-id="${id}"]`) || 
+                         document.querySelector(`canvas[data-ticket-id="${id}"]`)?.closest('.bg-white\\/20')
+    
+    if (ticketElement) {
+      // Use html2canvas for better quality ticket export
+      import('html2canvas').then(html2canvas => {
+        html2canvas.default(ticketElement, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null
+        }).then(canvas => {
+          const pngUrl = canvas.toDataURL('image/png')
+          const downloadLink = document.createElement('a')
+          downloadLink.href = pngUrl
+          downloadLink.download = `ticket-${match?.home_team}-vs-${match?.away_team}-${seat_number}.png`
+          document.body.appendChild(downloadLink)
+          downloadLink.click()
+          document.body.removeChild(downloadLink)
+        })
+      }).catch(err => {
+        console.error('Error generating ticket image:', err)
+        // Fallback to QR code only
+        const canvas = document.querySelector(`canvas[data-ticket-id="${id}"]`) || document.querySelector('canvas')
+        if (canvas) {
+          const pngUrl = canvas.toDataURL('image/png')
+          const downloadLink = document.createElement('a')
+          downloadLink.href = pngUrl
+          downloadLink.download = `qr-${id}.png`
+          document.body.appendChild(downloadLink)
+          downloadLink.click()
+          document.body.removeChild(downloadLink)
+        }
+      })
     }
   }
 
   return (
-    <div className="bg-light-gray rounded-xl shadow-lg p-6 max-w-md mx-auto">
-      {/* Ticket Header */}
+    <div data-ticket-id={id} className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-lg rounded-xl p-6 max-w-md mx-auto">
+      {/* Header */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center space-x-2 mb-2">
-          <SportsSoccer className="h-8 w-8 text-primary-teal" />
-          <h2 className="text-2xl font-bold text-primary-navy">FootballTickets</h2>
+          <SportsSoccer className="h-8 w-8 text-yellow-400" />
+          <h2 className="text-2xl font-bold text-white">FootballTickets</h2>
         </div>
-        <p className="text-dark-gray">Digital Ticket</p>
+        <p className="text-gray-200">Digital Ticket</p>
       </div>
 
       {/* QR Code */}
@@ -74,107 +99,83 @@ const TicketQR = ({
             size={size}
             level="H"
             includeMargin
-            className="border-4 border-white rounded-lg"
+            className="border-4 border-white rounded-lg bg-white"
+            data-ticket-id={id}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <SportsSoccer className="h-8 w-8 text-dark-gray opacity-20" />
+            <SportsSoccer className="h-8 w-8 text-white/20" />
           </div>
         </div>
       </div>
 
       {/* Ticket ID */}
       <div className="text-center mb-4">
-        <p className="text-sm text-dark-gray">Ticket ID</p>
-        <p className="font-mono font-semibold text-primary-navy">
-          {id.slice(0, 8).toUpperCase()}
-        </p>
+        <p className="text-sm text-gray-200">Ticket ID</p>
+        <p className="font-mono font-semibold text-white">{id.slice(0, 8).toUpperCase()}</p>
       </div>
 
       {/* Download Button */}
       <button
         onClick={handleDownload}
-        className="w-full bg-primary-teal text-white py-2 rounded-lg font-semibold mb-6 hover:bg-opacity-90 transition-colors flex items-center justify-center space-x-2"
+        className="w-full bg-yellow-400 text-gray-900 py-2 rounded-lg font-semibold mb-6 hover:bg-yellow-300 transition-colors flex items-center justify-center space-x-2"
       >
         <Download />
-        <span>Download QR Code</span>
+        <span>Download Ticket</span>
       </button>
 
       {/* Ticket Details */}
-      {showDetails && matches && (
-        <div className="border-t border-medium-gray pt-6">
-          <h3 className="font-semibold text-primary-navy mb-4 flex items-center">
-            <ConfirmationNumber className="h-5 w-5 mr-2" />
-            Ticket Information
-          </h3>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-dark-gray flex items-center space-x-2">
-                <SportsSoccer className="h-4 w-4" />
-                <span>Match:</span>
-              </span>
-              <span className="font-semibold text-primary-navy text-right">
-                {matches.home_team} vs {matches.away_team}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-dark-gray flex items-center space-x-2">
-                <CalendarToday className="h-4 w-4" />
-                <span>Date & Time:</span>
-              </span>
-              <span className="font-semibold text-primary-navy text-right">
-                {formatDate(matches.match_date)}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-dark-gray flex items-center space-x-2">
-                <LocationOn className="h-4 w-4" />
-                <span>Venue:</span>
-              </span>
-              <span className="font-semibold text-primary-navy text-right">
-                {matches.venue}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-dark-gray flex items-center space-x-2">
-                <EventSeat className="h-4 w-4" />
-                <span>Seat:</span>
-              </span>
-              <span className="font-semibold text-primary-navy">
-                {seat_number}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-dark-gray flex items-center space-x-2">
-                <span>💰</span>
-                <span>Price:</span>
-              </span>
-              <span className="font-semibold text-primary-navy">
-                {formatCurrency(price)}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-dark-gray flex items-center space-x-2">
-                <Person className="h-4 w-4" />
-                <span>Status:</span>
-              </span>
-              <span className="font-semibold text-green-600">
-                Active
-              </span>
-            </div>
+      {showDetails && match && (
+        <div className="border-t border-white/30 pt-6 space-y-3 text-gray-200">
+          <div className="flex justify-between">
+            <span className="flex items-center space-x-2">
+              <SportsSoccer className="h-4 w-4" />
+              <span>Match:</span>
+            </span>
+            <span className="font-semibold text-white text-right">{match.home_team} vs {match.away_team}</span>
           </div>
 
-          {/* Terms */}
-          <div className="mt-6 p-3 bg-light-gray rounded-lg">
-            <p className="text-xs text-dark-gray text-center">
-              Present this QR code at the stadium entrance. 
-              Ticket valid only for the specified match and seat.
-            </p>
+          <div className="flex justify-between">
+            <span className="flex items-center space-x-2">
+              <CalendarToday className="h-4 w-4" />
+              <span>Date & Time:</span>
+            </span>
+            <span className="font-semibold text-white">{formatDate(match.match_date)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="flex items-center space-x-2">
+              <LocationOn className="h-4 w-4" />
+              <span>Venue:</span>
+            </span>
+            <span className="font-semibold text-white">{match.venue}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="flex items-center space-x-2">
+              <EventSeat className="h-4 w-4" />
+              <span>Seat:</span>
+            </span>
+            <span className="font-semibold text-white">{seat_number}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="flex items-center space-x-2">
+              <span>💰</span>
+              <span>Price:</span>
+            </span>
+            <span className="font-semibold text-white">{formatCurrency(price)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="flex items-center space-x-2">
+              <Person className="h-4 w-4" />
+              <span>Status:</span>
+            </span>
+            <span className="font-semibold text-green-500">Active</span>
+          </div>
+
+          <div className="mt-4 p-2 bg-white/10 rounded text-xs text-gray-200 text-center">
+            Present this QR code at the stadium entrance. Ticket valid only for the specified match and seat.
           </div>
         </div>
       )}
@@ -186,19 +187,20 @@ const TicketQR = ({
 export const CompactTicketQR = ({ ticket }) => {
   if (!ticket) return null
 
-  const qrData = generateQRData(ticket.id, ticket.matches?.id, ticket.seat_number)
+  const qrData = generateQRData(ticket.id, ticket.match?.id, ticket.seat_number)
 
   return (
-    <div className="flex items-center space-x-3 p-3 bg-light-gray rounded-lg">
+    <div className="flex items-center space-x-3 p-2 bg-white/20 backdrop-blur-lg rounded-lg">
       <QRCode 
         value={qrData} 
         size={64}
         level="M"
+        data-ticket-id={ticket.id}
       />
       <div>
-        <p className="font-semibold text-sm">{ticket.seat_number}</p>
-        <p className="text-xs text-dark-gray">
-          {ticket.matches?.home_team} vs {ticket.matches?.away_team}
+        <p className="font-semibold text-sm text-white">{ticket.seat_number}</p>
+        <p className="text-xs text-gray-200">
+          {ticket.match?.home_team} vs {ticket.match?.away_team}
         </p>
       </div>
     </div>

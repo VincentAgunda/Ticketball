@@ -4,8 +4,10 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000, // Increased timeout for SMS
 });
 
+// Request interceptor for auth
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('firebaseToken');
@@ -14,7 +16,14 @@ api.interceptors.request.use(
     }
     return config;
   },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
@@ -36,6 +45,19 @@ export const smsService = {
     const response = await api.post('/sms/send', smsData);
     return response.data;
   },
+
+  sendTicketSMS: async (ticketData, userData) => {
+    const response = await api.post('/sms/send-ticket', {
+      ticket: ticketData,
+      user: userData
+    });
+    return response.data;
+  },
+
+  markSmsSent: async (ticketId) => {
+    const response = await api.post('/sms/mark-sent', { ticketId });
+    return response.data;
+  }
 };
 
 export const healthCheck = async () => {
