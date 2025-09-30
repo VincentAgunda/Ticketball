@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Use backend URL in production, localhost in development
+const API_BASE_URL =
+  import.meta.env.MODE === 'development'
+    ? 'http://localhost:5000/api'
+    : 'https://ticket-backend-vnng.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -33,11 +37,13 @@ export const mpesaService = {
     const response = await api.post('/mpesa/stk-push', paymentData);
     return response.data;
   },
-  
+
   checkPaymentStatus: async (checkoutRequestId) => {
-    const response = await api.get(`/mpesa/check-payment?checkoutRequestId=${checkoutRequestId}`);
+    const response = await api.get(
+      `/mpesa/check-payment?checkoutRequestId=${checkoutRequestId}`
+    );
     return response.data;
-  }
+  },
 };
 
 export const smsService = {
@@ -49,7 +55,7 @@ export const smsService = {
   sendTicketSMS: async (ticketData, userData) => {
     const response = await api.post('/sms/send-ticket', {
       ticket: ticketData,
-      user: userData
+      user: userData,
     });
     return response.data;
   },
@@ -57,7 +63,7 @@ export const smsService = {
   markSmsSent: async (ticketId) => {
     const response = await api.post('/sms/mark-sent', { ticketId });
     return response.data;
-  }
+  },
 };
 
 export const healthCheck = async () => {
