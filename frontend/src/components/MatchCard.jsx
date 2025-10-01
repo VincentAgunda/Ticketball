@@ -139,11 +139,7 @@ const MatchCard = ({
           </div>
         </div>
 
-        {/* Time */}
-        <div className="text-center mb-4 text-gray-700 text-sm font-medium">
-          {formatDate(matchDate, { hour: '2-digit', minute: '2-digit' })}
-        </div>
-
+       
         {/* Availability */}
         <div className="mb-6">
           {isMatchOver ? (
