@@ -139,7 +139,6 @@ const MatchCard = ({
           </div>
         </div>
 
-       
         {/* Availability */}
         <div className="mb-6">
           {isMatchOver ? (
@@ -172,10 +171,10 @@ const MatchCard = ({
 
         {/* Actions */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center text-gray-700 text-sm font-medium">
+          <div className="flex items-center text-gray-900">
             <ConfirmationNumber fontSize="small" />
-            <span className="ml-1">
-              From {formatCurrency(ticket_price || 0)}
+            <span className="ml-2 text-lg font-semibold tracking-tight">
+              {formatCurrency(ticket_price || 0)}
             </span>
           </div>
           {!isSoldOut && isUpcoming ? (
