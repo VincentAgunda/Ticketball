@@ -11,11 +11,17 @@ import { getTeamLogo } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
-// Apple-inspired gradients using only grays + blues
+// Apple-inspired clean gradients
 const appleShades = [
-  'linear-gradient(135deg, #f5f5f7 0%, #f2f4f8)',
-  'linear-gradient(135deg, #dee0e0 , #dee0e0 )',
+  'linear-gradient(135deg, #f5f5f7 0%, #eaeaea 100%)',
+  'linear-gradient(135deg, #e3e4e8 0%, #f9f9f9 100%)',
 ]
+
+// Global Apple-like font style
+const appleFont = {
+  fontFamily:
+    '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+}
 
 const MatchCard = ({
   match,
@@ -23,7 +29,7 @@ const MatchCard = ({
   shadeIndex = 0,
   currentTime = new Date(),
   customDelay = 0,
-  allowGuestBooking = true, // ✅ Default to true for guest booking
+  allowGuestBooking = true,
 }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -48,40 +54,24 @@ const MatchCard = ({
   const isSoldOut = available_seats === 0
   const isMatchOver = !isUpcoming
 
-  // ✅ Updated handle booking click - allows guest booking
   const handleBookClick = () => {
     if (!user && !allowGuestBooking) {
-      // Only redirect to login if guest booking is explicitly disabled
-      navigate('/login', { 
-        state: { 
+      navigate('/login', {
+        state: {
           from: `/booking/${id}`,
-          message: 'Please login to book tickets'
-        }
+          message: 'Please login to book tickets',
+        },
       })
       return
     }
-
-    // ✅ Always navigate to booking page for both authenticated and guest users
     navigate(`/booking/${id}`)
-    
-    // Call the optional onBookClick callback if provided
     if (onBookClick) onBookClick(match)
   }
 
-  // ✅ Get button text based on user status
   const getButtonText = () => {
     if (isSoldOut) return 'Sold Out'
     if (isMatchOver) return 'Completed'
-    if (!user && allowGuestBooking) return 'Book Now' // ✅ Indicate guest booking
     return 'Book Now'
-  }
-
-  // ✅ Get button tooltip/hint
-  const getButtonHint = () => {
-    if (!user && allowGuestBooking) {
-      return 'Book without creating an account'
-    }
-    return ''
   }
 
   return (
@@ -89,23 +79,20 @@ const MatchCard = ({
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{
-        duration: 0.7,
-        ease: 'easeOut',
-        delay: customDelay,
-      }}
+      transition={{ duration: 0.6, ease: 'easeOut', delay: customDelay }}
     >
       <div
-        className="rounded-3xl shadow-sm hover:shadow-xl
-                   border border-gray-200/60 p-6
-                   transition-all duration-500 hover:-translate-y-1"
-        style={{
+        className="rounded-2xl shadow-md hover:shadow-2xl 
+                   p-6 transition-all duration-500 hover:-translate-y-1
+                   border border-gray-100"
+        style={{ 
           background: appleShades[shadeIndex % appleShades.length],
+          ...appleFont 
         }}
       >
         {/* Date & Venue */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center text-gray-700 text-sm space-x-2">
+          <div className="flex items-center text-gray-700 text-sm font-medium space-x-2">
             <CalendarToday fontSize="small" />
             <span>
               {formatDate(matchDate, {
@@ -115,7 +102,7 @@ const MatchCard = ({
               })}
             </span>
           </div>
-          <div className="flex items-center text-gray-700 text-sm space-x-1">
+          <div className="flex items-center text-gray-700 text-sm font-medium space-x-1">
             <LocationOn fontSize="small" />
             <span>{venue || 'TBD'}</span>
           </div>
@@ -123,67 +110,62 @@ const MatchCard = ({
 
         {/* Teams */}
         <div className="flex items-center justify-between mb-6">
-          {/* Home Team */}
           <div className="text-center flex-1 group">
-            <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+            <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border border-gray-200 shadow">
               <img
                 src={getTeamLogo(home_team)}
                 alt={home_team}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
               />
             </div>
-            <h3 className="mt-2 font-semibold text-gray-900 text-sm md:text-base">
+            <h3 className="mt-2 font-semibold text-gray-900 text-base">
               {home_team || 'Home Team'}
             </h3>
           </div>
 
-          <div className="px-4 text-gray-600 font-medium">vs</div>
+          <div className="px-4 text-gray-600 font-semibold">vs</div>
 
-          {/* Away Team */}
           <div className="text-center flex-1 group">
-            <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+            <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border border-gray-200 shadow">
               <img
                 src={getTeamLogo(away_team)}
                 alt={away_team}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
               />
             </div>
-            <h3 className="mt-2 font-semibold text-gray-900 text-sm md:text-base">
+            <h3 className="mt-2 font-semibold text-gray-900 text-base">
               {away_team || 'Away Team'}
             </h3>
           </div>
         </div>
 
         {/* Time */}
-        <div className="text-center mb-4 text-gray-700 text-sm">
-          {formatDate(matchDate, {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+        <div className="text-center mb-4 text-gray-700 text-sm font-medium">
+          {formatDate(matchDate, { hour: '2-digit', minute: '2-digit' })}
         </div>
 
         {/* Availability */}
         <div className="mb-6">
           {isMatchOver ? (
-            <div className="text-center text-red-500 font-medium">
+            <div className="text-center text-red-600 font-semibold">
               Match Completed
             </div>
           ) : isSoldOut ? (
-            <div className="text-center text-red-500 font-medium">Sold Out</div>
+            <div className="text-center text-red-600 font-semibold">Sold Out</div>
           ) : (
             <div className="space-y-2">
-              <div className="flex justify-between text-xs text-gray-700">
+              <div className="flex justify-between text-xs text-gray-600 font-medium">
                 <span>Seats Left</span>
                 <span>{available_seats || 0}</span>
               </div>
-              <div className="w-full bg-[#f8d7e3] rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                 <div
                   className={`h-2 rounded-full transition-all ${
                     availabilityPercentage > 50
                       ? 'bg-green-500'
                       : availabilityPercentage > 20
                       ? 'bg-yellow-400'
-                      : 'bg-red-400'
+                      : 'bg-red-500'
                   }`}
                   style={{ width: `${availabilityPercentage}%` }}
                 />
@@ -192,16 +174,9 @@ const MatchCard = ({
           )}
         </div>
 
-        {/* Guest booking indicator */}
-        {!user && allowGuestBooking && !isSoldOut && isUpcoming && (
-          <div className="mb-3 text-center">
-            
-          </div>
-        )}
-
         {/* Actions */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center text-gray-700 text-sm">
+          <div className="flex items-center text-gray-700 text-sm font-medium">
             <ConfirmationNumber fontSize="small" />
             <span className="ml-1">
               From {formatCurrency(ticket_price || 0)}
@@ -210,33 +185,16 @@ const MatchCard = ({
           {!isSoldOut && isUpcoming ? (
             <button
               onClick={handleBookClick}
-              className="px-4 py-2 rounded-full text-sm font-medium
-                         bg-[#0B1B32] text-white hover:bg-[#18314F]
-                         transition-colors relative group"
-              title={getButtonHint()} // ✅ Show hint on hover
+              className="px-4 py-2 rounded-full text-sm font-semibold
+                         bg-blue-600 text-white hover:bg-blue-700
+                         transition-colors shadow-sm"
             >
               {getButtonText()}
-              {/* ✅ Tooltip for guest users */}
-              {!user && allowGuestBooking && (
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
-                              bg-gray-800 text-white text-xs px-2 py-1 rounded 
-                              opacity-0 group-hover:opacity-100 transition-opacity 
-                              pointer-events-none whitespace-nowrap z-10">
-                  Book without account
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 
-                                w-2 h-2 bg-gray-800 rotate-45"></div>
-                </div>
-              )}
             </button>
-          ) : isMatchOver ? (
-            <span className="px-4 py-2 rounded-full text-sm font-medium
-                           bg-gray-200 text-gray-500 cursor-not-allowed">
-              Completed
-            </span>
           ) : (
-            <span className="px-4 py-2 rounded-full text-sm font-medium
+            <span className="px-4 py-2 rounded-full text-sm font-semibold
                            bg-gray-200 text-gray-500 cursor-not-allowed">
-              Sold Out
+              {getButtonText()}
             </span>
           )}
         </div>
