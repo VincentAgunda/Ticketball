@@ -57,14 +57,15 @@ const sendTicketSMS = async (req, res) => {
   try {
     const { ticket, user } = req.body;
 
-    if (!ticket || !user) {
+    if (!ticket) {
       return res.status(400).json({
         success: false,
-        error: 'Ticket and user data are required'
+        error: 'Ticket data is required'
       });
     }
 
-    const phoneNumber = ticket.user_phone || user.phoneNumber;
+    // ✅ Get phone number from ticket (for both authenticated and guest users)
+    const phoneNumber = ticket.user_phone;
     
     if (!phoneNumber) {
       return res.status(400).json({
@@ -75,7 +76,9 @@ const sendTicketSMS = async (req, res) => {
 
     const formattedPhone = phoneNumber.startsWith('+') 
       ? phoneNumber.substring(1) 
-      : phoneNumber;
+      : phoneNumber.startsWith('254')
+      ? phoneNumber
+      : `254${phoneNumber.substring(phoneNumber.length - 9)}`;
 
     // Get match details from ticket
     const matchName = ticket.match?.home_team && ticket.match?.away_team 
@@ -105,17 +108,22 @@ const sendTicketSMS = async (req, res) => {
     const venue = ticket.match?.venue || 'Stadium';
     const seatType = ticket.seat_type ? ticket.seat_type.charAt(0).toUpperCase() + ticket.seat_type.slice(1) : 'Standard';
 
+    // ✅ Improved message with guest link for non-authenticated users
+    const guestLink = ticket.guest_secret 
+      ? `${process.env.FRONTEND_URL || 'http://localhost:5173'}/tickets/${ticket.id}?guest_secret=${ticket.guest_secret}`
+      : `${process.env.FRONTEND_URL || 'http://localhost:5173'}/tickets/${ticket.id}`;
+
     const message = `⚽ FOOTBALL TICKET CONFIRMED ⚽
 
 Match: ${matchName}
 Date: ${matchDate}
 Venue: ${venue}
-Seat: ${ticket.seat_number}
+Seat: ${ticket.seat_number || 'TBA'}
 Type: ${seatType}
 Price: KES ${ticket.price}
 Ticket ID: ${ticket.id?.slice(0, 8).toUpperCase() || 'N/A'}
 
-View your ticket: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/tickets
+View your ticket: ${guestLink}
 
 IMPORTANT:
 • Present QR code at entrance
@@ -148,6 +156,7 @@ Thank you for choosing FootballTickets!`;
     const recipient = response.data.SMSMessageData.Recipients[0];
     
     if (recipient.status === 'Success') {
+      console.log(`✅ SMS sent successfully to ${formattedPhone} for ticket ${ticket.id}`);
       res.json({
         success: true,
         data: response.data,
@@ -161,7 +170,8 @@ Thank you for choosing FootballTickets!`;
   } catch (error) {
     console.error('Ticket SMS sending error:', error.message);
     
-    res.status(500).json({
+    // ✅ Still return success to not block the booking flow
+    res.json({
       success: false,
       error: 'Failed to send ticket SMS',
       details: error.response?.data || error.message

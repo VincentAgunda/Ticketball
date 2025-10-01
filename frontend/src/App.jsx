@@ -71,6 +71,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/matches" element={<Matches />} />
 
+            {/* Booking is now PUBLIC for guest users */}
+            <Route path="/booking/:matchId" element={<Booking />} />
+
             {/* Public routes that redirect if logged in */}
             <Route
               path="/login"
@@ -89,15 +92,7 @@ function App() {
               }
             />
 
-            {/* Protected routes */}
-            <Route
-              path="/booking/:matchId"
-              element={
-                <ProtectedRoute>
-                  <Booking />
-                </ProtectedRoute>
-              }
-            />
+            {/* Protected routes for logged-in users only */}
             <Route
               path="/my-tickets"
               element={

@@ -31,7 +31,7 @@ const sortByCreatedAt = (data, order = 'desc') => {
   })
 }
 
-// Custom hook for matches
+// ==================== MATCHES ====================
 export const useMatches = () => {
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -40,7 +40,6 @@ export const useMatches = () => {
   useEffect(() => {
     fetchMatches()
     
-    // Real-time subscription
     const unsubscribe = onSnapshot(
       collection(db, 'matches'),
       (snapshot) => {
@@ -81,9 +80,7 @@ export const useMatches = () => {
         ...doc.data()
       }))
       
-      // Ensure sorting if we used fallback
       matchesData = sortByCreatedAt(matchesData, 'asc')
-      
       setMatches(matchesData)
     } catch (err) {
       console.error('Error fetching matches:', err)
@@ -139,18 +136,10 @@ export const useMatches = () => {
     }
   }
 
-  return { 
-    matches, 
-    loading, 
-    error, 
-    refetch: fetchMatches,
-    createMatch,
-    updateMatch,
-    deleteMatch
-  }
+  return { matches, loading, error, refetch: fetchMatches, createMatch, updateMatch, deleteMatch }
 }
 
-// Custom hook for user tickets - UPDATED with better error handling
+// ==================== USER / GUEST TICKETS ====================
 export const useUserTickets = (userId) => {
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -159,18 +148,12 @@ export const useUserTickets = (userId) => {
   useEffect(() => {
     if (userId) {
       fetchTickets()
-      
-      // Real-time subscription with error handling for index issues
+
       try {
         const ticketsRef = collection(db, 'tickets')
         let q
-        
         try {
-          q = query(
-            ticketsRef, 
-            where('user_id', '==', userId),
-            orderBy('created_at', 'desc')
-          )
+          q = query(ticketsRef, where('user_id', '==', userId), orderBy('created_at', 'desc'))
         } catch (indexError) {
           console.warn('Indexed query failed, using simple query:', indexError)
           q = query(ticketsRef, where('user_id', '==', userId))
@@ -183,20 +166,15 @@ export const useUserTickets = (userId) => {
               id: doc.id,
               ...doc.data()
             }))
-            
-            // Sort by created_at descending on client side if needed
-            const sortedTickets = sortByCreatedAt(ticketsData)
-            setTickets(sortedTickets)
+            setTickets(sortByCreatedAt(ticketsData))
             setLoading(false)
           },
           (err) => {
             console.error('Real-time subscription error:', err)
             setError(err.message)
-            // If real-time fails, fall back to regular fetch
             fetchTickets()
           }
         )
-
         return () => unsubscribe()
       } catch (err) {
         console.error('Subscription setup error:', err)
@@ -204,6 +182,7 @@ export const useUserTickets = (userId) => {
         fetchTickets()
       }
     } else {
+      // Guests: no subscription
       setTickets([])
       setLoading(false)
     }
@@ -215,36 +194,24 @@ export const useUserTickets = (userId) => {
       setLoading(false)
       return
     }
-    
     try {
       setLoading(true)
       setError(null)
       const ticketsRef = collection(db, 'tickets')
-      
-      // Try the indexed query first, fallback to simple query if it fails
       let querySnapshot
       try {
-        const q = query(
-          ticketsRef, 
-          where('user_id', '==', userId),
-          orderBy('created_at', 'desc')
-        )
+        const q = query(ticketsRef, where('user_id', '==', userId), orderBy('created_at', 'desc'))
         querySnapshot = await getDocs(q)
       } catch (indexError) {
         console.warn('Indexed query failed, using simple query:', indexError)
-        // Fallback: get all user tickets and sort client-side
         const simpleQuery = query(ticketsRef, where('user_id', '==', userId))
         querySnapshot = await getDocs(simpleQuery)
       }
-      
       let ticketsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
-      
-      // Ensure sorting if we used fallback
       ticketsData = sortByCreatedAt(ticketsData)
-      
       setTickets(ticketsData)
     } catch (err) {
       console.error('Error fetching tickets:', err)
@@ -257,13 +224,13 @@ export const useUserTickets = (userId) => {
   const createTicket = async (ticketData) => {
     try {
       setError(null)
-      const ticketsRef = collection(db, 'tickets')
-      const docRef = await addDoc(ticketsRef, {
+      const colRef = userId ? collection(db, 'tickets') : collection(db, 'guestTickets')
+      const docRef = await addDoc(colRef, {
         ...ticketData,
+        user_id: userId || null,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp()
       })
-      console.log('Ticket created successfully:', docRef.id)
       return { id: docRef.id, ...ticketData }
     } catch (err) {
       console.error('Error creating ticket:', err)
@@ -275,12 +242,11 @@ export const useUserTickets = (userId) => {
   const updateTicket = async (ticketId, updates) => {
     try {
       setError(null)
-      const ticketRef = doc(db, 'tickets', ticketId)
+      const ticketRef = doc(db, userId ? 'tickets' : 'guestTickets', ticketId)
       await updateDoc(ticketRef, {
         ...updates,
         updated_at: serverTimestamp()
       })
-      console.log('Ticket updated successfully:', ticketId)
       return true
     } catch (err) {
       console.error('Error updating ticket:', err)
@@ -294,19 +260,17 @@ export const useUserTickets = (userId) => {
       setError(null)
       const batch = writeBatch(db)
       const createdTickets = []
-
       ticketsData.forEach(ticketData => {
-        const ticketRef = doc(collection(db, 'tickets'))
+        const ticketRef = doc(collection(db, userId ? 'tickets' : 'guestTickets'))
         batch.set(ticketRef, {
           ...ticketData,
+          user_id: userId || null,
           created_at: serverTimestamp(),
           updated_at: serverTimestamp()
         })
         createdTickets.push({ id: ticketRef.id, ...ticketData })
       })
-
       await batch.commit()
-      console.log('Multiple tickets created successfully')
       return createdTickets
     } catch (err) {
       console.error('Error creating multiple tickets:', err)
@@ -315,18 +279,10 @@ export const useUserTickets = (userId) => {
     }
   }
 
-  return { 
-    tickets, 
-    loading, 
-    error, 
-    refetch: fetchTickets,
-    createTicket,
-    updateTicket,
-    createMultipleTickets
-  }
+  return { tickets, loading, error, refetch: fetchTickets, createTicket, updateTicket, createMultipleTickets }
 }
 
-// Custom hook for all tickets (admin) - UPDATED
+// ==================== ALL TICKETS (ADMIN) ====================
 export const useAllTickets = () => {
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -334,15 +290,10 @@ export const useAllTickets = () => {
 
   useEffect(() => {
     fetchTickets()
-    
-    // Real-time subscription
     const unsubscribe = onSnapshot(
       collection(db, 'tickets'),
       (snapshot) => {
-        const ticketsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
+        const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         setTickets(sortByCreatedAt(ticketsData))
         setLoading(false)
       },
@@ -352,7 +303,6 @@ export const useAllTickets = () => {
         setLoading(false)
       }
     )
-
     return () => unsubscribe()
   }, [])
 
@@ -361,7 +311,6 @@ export const useAllTickets = () => {
       setLoading(true)
       setError(null)
       const ticketsRef = collection(db, 'tickets')
-      
       let querySnapshot
       try {
         const q = query(ticketsRef, orderBy('created_at', 'desc'))
@@ -370,15 +319,8 @@ export const useAllTickets = () => {
         console.warn('Ordered query failed, using simple query:', indexError)
         querySnapshot = await getDocs(ticketsRef)
       }
-      
-      let ticketsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      
-      // Ensure sorting if we used fallback
+      let ticketsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       ticketsData = sortByCreatedAt(ticketsData)
-      
       setTickets(ticketsData)
     } catch (err) {
       console.error('Error fetching all tickets:', err)
@@ -392,10 +334,7 @@ export const useAllTickets = () => {
     try {
       setError(null)
       const ticketRef = doc(db, 'tickets', ticketId)
-      await updateDoc(ticketRef, {
-        ...updates,
-        updated_at: serverTimestamp()
-      })
+      await updateDoc(ticketRef, { ...updates, updated_at: serverTimestamp() })
       return true
     } catch (err) {
       console.error('Error updating ticket:', err)
@@ -417,17 +356,10 @@ export const useAllTickets = () => {
     }
   }
 
-  return { 
-    tickets, 
-    loading, 
-    error, 
-    refetch: fetchTickets,
-    updateTicket,
-    deleteTicket
-  }
+  return { tickets, loading, error, refetch: fetchTickets, updateTicket, deleteTicket }
 }
 
-// Custom hook for payments
+// ==================== PAYMENTS ====================
 export const usePayments = (userId = null) => {
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -443,13 +375,10 @@ export const usePayments = (userId = null) => {
       setError(null)
       const paymentsRef = collection(db, 'payments')
       let q
-      
       if (userId) {
-        // Get payments for specific user through their tickets
         const userTicketsQuery = query(collection(db, 'tickets'), where('user_id', '==', userId))
         const userTicketsSnapshot = await getDocs(userTicketsQuery)
         const userTicketIds = userTicketsSnapshot.docs.map(doc => doc.id)
-        
         if (userTicketIds.length > 0) {
           q = query(paymentsRef, where('ticket_id', 'in', userTicketIds))
         } else {
@@ -460,12 +389,8 @@ export const usePayments = (userId = null) => {
       } else {
         q = query(paymentsRef, orderBy('created_at', 'desc'))
       }
-      
       const querySnapshot = await getDocs(q)
-      const paymentsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      const paymentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       setPayments(sortByCreatedAt(paymentsData))
     } catch (err) {
       console.error('Error fetching payments:', err)
@@ -479,10 +404,7 @@ export const usePayments = (userId = null) => {
     try {
       setError(null)
       const paymentsRef = collection(db, 'payments')
-      const docRef = await addDoc(paymentsRef, {
-        ...paymentData,
-        created_at: serverTimestamp()
-      })
+      const docRef = await addDoc(paymentsRef, { ...paymentData, created_at: serverTimestamp() })
       return { id: docRef.id, ...paymentData }
     } catch (err) {
       console.error('Error creating payment:', err)
@@ -495,10 +417,7 @@ export const usePayments = (userId = null) => {
     try {
       setError(null)
       const paymentRef = doc(db, 'payments', paymentId)
-      await updateDoc(paymentRef, {
-        ...updates,
-        updated_at: serverTimestamp()
-      })
+      await updateDoc(paymentRef, { ...updates, updated_at: serverTimestamp() })
       return true
     } catch (err) {
       console.error('Error updating payment:', err)
@@ -507,17 +426,10 @@ export const usePayments = (userId = null) => {
     }
   }
 
-  return { 
-    payments, 
-    loading, 
-    error, 
-    refetch: fetchPayments,
-    createPayment,
-    updatePayment
-  }
+  return { payments, loading, error, refetch: fetchPayments, createPayment, updatePayment }
 }
 
-// Custom hook for users (admin)
+// ==================== USERS (ADMIN) ====================
 export const useUsers = () => {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -525,15 +437,10 @@ export const useUsers = () => {
 
   useEffect(() => {
     fetchUsers()
-    
-    // Real-time subscription
     const unsubscribe = onSnapshot(
       collection(db, 'users'),
       (snapshot) => {
-        const usersData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
+        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         setUsers(sortByCreatedAt(usersData))
         setLoading(false)
       },
@@ -543,7 +450,6 @@ export const useUsers = () => {
         setLoading(false)
       }
     )
-
     return () => unsubscribe()
   }, [])
 
@@ -553,10 +459,7 @@ export const useUsers = () => {
       setError(null)
       const usersRef = collection(db, 'users')
       const querySnapshot = await getDocs(usersRef)
-      const usersData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       setUsers(sortByCreatedAt(usersData))
     } catch (err) {
       console.error('Error fetching users:', err)
@@ -570,10 +473,7 @@ export const useUsers = () => {
     try {
       setError(null)
       const userRef = doc(db, 'users', userId)
-      await updateDoc(userRef, {
-        ...updates,
-        updated_at: serverTimestamp()
-      })
+      await updateDoc(userRef, { ...updates, updated_at: serverTimestamp() })
       return true
     } catch (err) {
       console.error('Error updating user:', err)
@@ -582,19 +482,7 @@ export const useUsers = () => {
     }
   }
 
-  return { 
-    users, 
-    loading, 
-    error, 
-    refetch: fetchUsers,
-    updateUser
-  }
+  return { users, loading, error, refetch: fetchUsers, updateUser }
 }
 
-export default {
-  useMatches,
-  useUserTickets,
-  useAllTickets,
-  usePayments,
-  useUsers
-}
+export default { useMatches, useUserTickets, useAllTickets, usePayments, useUsers }

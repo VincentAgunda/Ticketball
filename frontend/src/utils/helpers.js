@@ -1,6 +1,6 @@
 import { APP_CONFIG } from './constants'
 
-// Format currency for Kenya Shillings
+// ✅ Format currency for Kenya Shillings
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-KE', {
     style: 'currency',
@@ -8,9 +8,38 @@ export const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// Format date and time
-export const formatDate = (dateString, options = {}) => {
-  const date = new Date(dateString)
+// ✅ Robust Date Formatter (handles Firestore Timestamps, ISO strings, and numbers)
+export const formatDate = (dateInput, options = {}) => {
+  if (!dateInput) return 'Invalid Date'
+
+  let date
+
+  try {
+    // Firestore Timestamp object
+    if (typeof dateInput === 'object' && dateInput.seconds) {
+      date = new Date(dateInput.seconds * 1000)
+    } 
+    // JS Date object
+    else if (dateInput instanceof Date) {
+      date = dateInput
+    } 
+    // UNIX timestamp (ms or s)
+    else if (typeof dateInput === 'number') {
+      date = new Date(
+        dateInput.toString().length === 10 ? dateInput * 1000 : dateInput
+      )
+    } 
+    // String (ISO or other)
+    else {
+      date = new Date(dateInput)
+    }
+
+    if (isNaN(date.getTime())) return 'Invalid Date'
+  } catch (err) {
+    console.error('Date parse error:', err, dateInput)
+    return 'Invalid Date'
+  }
+
   const defaultOptions = {
     year: 'numeric',
     month: 'long',
@@ -18,11 +47,11 @@ export const formatDate = (dateString, options = {}) => {
     hour: '2-digit',
     minute: '2-digit'
   }
-  
-  return date.toLocaleDateString('en-KE', { ...defaultOptions, ...options })
+
+  return new Intl.DateTimeFormat('en-KE', { ...defaultOptions, ...options }).format(date)
 }
 
-// Generate seat map data
+// ✅ Generate seat map data
 export const generateSeatMap = (totalSeats, bookedSeats = []) => {
   const { rows, seatsPerRow, vipRows, premiumRows } = APP_CONFIG.stadium
   const seats = []
@@ -62,7 +91,7 @@ export const calculateTicketPrice = (basePrice, seatType) => {
   return Math.round(basePrice * (multipliers[seatType?.toLowerCase()] || 1))
 }
 
-// Generate QR code data for tickets
+// ✅ Generate QR code data for tickets
 export const generateQRData = (ticketId, matchId, seatNumber) => {
   return JSON.stringify({
     ticketId,
@@ -90,7 +119,7 @@ export const formatPhoneNumber = (phone) => {
   }
 }
 
-// Debounce function for search inputs
+// ✅ Debounce function for search inputs
 export const debounce = (func, wait) => {
   let timeout
   return function executedFunction(...args) {
@@ -103,13 +132,13 @@ export const debounce = (func, wait) => {
   }
 }
 
-// Check if user is admin (simple email-based check)
+// ✅ Check if user is admin (simple email-based check)
 export const isAdminUser = (email) => {
   const adminDomains = ['@admin.com', '@footballtickets.com']
   return adminDomains.some(domain => email?.endsWith(domain))
 }
 
-// Local storage helpers
+// ✅ Local storage helpers
 export const storage = {
   get: (key) => {
     try {

@@ -20,6 +20,7 @@
     "framer-motion": "^12.23.21",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
+    "lucide-react": "^0.544.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.1",
     "react-calendar": "^6.0.0",

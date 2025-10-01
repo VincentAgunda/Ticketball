@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react' 
+import React, { useState } from 'react' 
 import { 
   Search,
   ConfirmationNumber,
@@ -47,7 +47,7 @@ const TicketManager = () => {
       ticket.price,
       ticket.status,
       ticket.user_email || 'N/A',
-      formatPhoneNumber(ticket.phone_number),
+      ticket.phone_number ? formatPhoneNumber(ticket.phone_number) : 'N/A',
       formatDate(ticket.created_at)
     ])
     
@@ -70,7 +70,7 @@ const TicketManager = () => {
       ticket.match?.away_team?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.seat_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (ticket.phone_number && formatPhoneNumber(ticket.phone_number).includes(searchTerm))
+      (ticket.phone_number && formatPhoneNumber(String(ticket.phone_number)).includes(searchTerm))
     
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter
     
@@ -221,7 +221,7 @@ const TicketManager = () => {
                     <div>
                       <div className="font-medium text-[#6e3640]">{ticket.user_email || 'N/A'}</div>
                       <div className="text-sm text-gray-600">
-                        {ticket.phone_number ? formatPhoneNumber(ticket.phone_number) : 'N/A'}
+                        {ticket.phone_number ? formatPhoneNumber(String(ticket.phone_number)) : 'N/A'}
                       </div>
                       <div className="text-xs text-gray-500">
                         {formatDate(ticket.created_at)}
