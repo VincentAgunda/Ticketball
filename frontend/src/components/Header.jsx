@@ -1,5 +1,6 @@
+// src/components/Header.jsx
 import React, { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { NAVIGATION } from "../utils/constants"
 import {
@@ -18,6 +19,7 @@ const Header = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { user, signOut, isAdmin, loading } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -49,6 +51,25 @@ const Header = () => {
     } catch (error) {
       console.error("Error signing out:", error)
     }
+  }
+
+  // ✅ Smooth scroll to News section
+  const scrollToNews = () => {
+    if (location.pathname === "/") {
+      const newsSection = document.getElementById("news-section")
+      if (newsSection) {
+        newsSection.scrollIntoView({ behavior: "smooth" })
+      }
+    } else {
+      navigate("/")
+      setTimeout(() => {
+        const newsSection = document.getElementById("news-section")
+        if (newsSection) {
+          newsSection.scrollIntoView({ behavior: "smooth" })
+        }
+      }, 500)
+    }
+    setMobileMenuOpen(false)
   }
 
   return (
@@ -92,6 +113,14 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+
+            {/* ✅ News link */}
+            <button
+              onClick={scrollToNews}
+              className="text-sm font-medium px-2 py-1 rounded-md text-gray-700 hover:text-black transition-colors"
+            >
+              News
+            </button>
           </nav>
 
           {/* User / Auth Section */}
@@ -187,95 +216,121 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Right-Side Drawer */}
+      {/* --- MOBILE MENU & OVERLAY --- */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-y-0 right-0 w-72 bg-white shadow-xl z-50 rounded-l-2xl backdrop-blur-md border-l border-gray-200 flex flex-col"
-          >
-            <div className="flex justify-between items-center p-4 border-b border-gray-200">
-              <span className="text-lg font-semibold text-gray-900">Menu</span>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-gray-700 hover:bg-gray-100 rounded-full"
-              >
-                <Close />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    location.pathname === item.href
-                      ? "text-black"
-                      : "text-gray-700 hover:text-black hover:bg-gray-50"
-                  }`}
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black/30 z-40 md:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-y-0 right-0 w-72 bg-white shadow-xl z-50 border-l border-gray-200 flex flex-col"
+            >
+              <div className="flex justify-between items-center p-4 border-b border-gray-200">
+                <span className="text-lg font-semibold text-gray-900">
+                  Menu
+                </span>
+                <button
                   onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-gray-700 hover:bg-gray-100 rounded-full"
                 >
-                  {item.name}
-                </Link>
-              ))}
-              <div className="border-t border-gray-200 pt-3">
-                {user ? (
-                  <>
-                    <div className="px-3 py-2 text-sm text-gray-900">
-                      <div className="flex items-center space-x-2">
-                        <AccountCircle />
-                        <div>
-                          <div className="font-medium truncate">{user.email}</div>
-                          {isAdmin && (
-                            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded">
-                              Admin
-                            </span>
-                          )}
+                  <Close />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+                {navigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      location.pathname === item.href
+                        ? "text-black"
+                        : "text-gray-700 hover:text-black hover:bg-gray-50"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+
+                {/* ✅ News in Mobile */}
+                <button
+                  onClick={scrollToNews}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
+                >
+                  News
+                </button>
+
+                <div className="border-t border-gray-200 pt-3">
+                  {user ? (
+                    <>
+                      <div className="px-3 py-2 text-sm text-gray-900">
+                        <div className="flex items-center space-x-2">
+                          <AccountCircle />
+                          <div>
+                            <div className="font-medium truncate">
+                              {user.email}
+                            </div>
+                            {isAdmin && (
+                              <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded">
+                                Admin
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {isAdmin && (
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Dashboard className="inline h-5 w-5 mr-2" />
+                          Admin Dashboard
+                        </Link>
+                      )}
                       <Link
-                        to="/admin"
+                        to="/my-tickets"
                         className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <Dashboard className="inline h-5 w-5 mr-2" />
-                        Admin Dashboard
+                        <SportsSoccer className="inline h-5 w-5 mr-2" />
+                        My Tickets
                       </Link>
-                    )}
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-gray-50"
+                      >
+                        <ExitToApp className="inline h-5 w-5 mr-2" />
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
                     <Link
-                      to="/my-tickets"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
+                      to="/login"
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <SportsSoccer className="inline h-5 w-5 mr-2" />
-                      My Tickets
+                      <Login className="inline h-5 w-5 mr-2 text-gray-600" />
+                      Sign In
                     </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-gray-50"
-                    >
-                      <ExitToApp className="inline h-5 w-5 mr-2" />
-                      Sign Out
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Login className="inline h-5 w-5 mr-2 text-gray-600" />
-                    Sign In
-                  </Link>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.header>

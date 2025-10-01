@@ -1,18 +1,29 @@
+// src/App.jsx
 import React from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { useAuth } from "./context/AuthContext"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
+
+// Public pages
 import Home from "./pages/public/Home"
 import Matches from "./pages/public/Matches"
+import News from "./pages/public/News"
 import Booking from "./pages/public/Booking"
+
+// Auth-related pages
 import Tickets from "./pages/public/Tickets"
 import Login from "./pages/public/Login"
 import Register from "./pages/public/Register"
+
+// Admin
 import AdminLayout from "./pages/admin/AdminLayout"
+
 import "./styles/globals.css"
 
-// Protected Route Component
+// -------------------
+// Protected Route
+// -------------------
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, isAdmin, loading } = useAuth()
 
@@ -41,7 +52,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   return children
 }
 
-// Public Route Component
+// -------------------
+// Public Route
+// -------------------
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth()
 
@@ -60,21 +73,25 @@ const PublicRoute = ({ children }) => {
   return children
 }
 
+// -------------------
+// App
+// -------------------
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-primary-light">
+      <div className="min-h-screen bg-primary-light flex flex-col">
         <Header />
-        <main>
+        <main className="flex-1">
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/matches" element={<Matches />} />
+            <Route path="/news" element={<News />} />
 
-            {/* Booking is now PUBLIC for guest users */}
+            {/* Booking (accessible even without login) */}
             <Route path="/booking/:matchId" element={<Booking />} />
 
-            {/* Public routes that redirect if logged in */}
+            {/* Public-only routes (redirect if logged in) */}
             <Route
               path="/login"
               element={
@@ -92,7 +109,7 @@ function App() {
               }
             />
 
-            {/* Protected routes for logged-in users only */}
+            {/* Protected user-only routes */}
             <Route
               path="/my-tickets"
               element={
@@ -112,7 +129,7 @@ function App() {
               }
             />
 
-            {/* Catch all */}
+            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
