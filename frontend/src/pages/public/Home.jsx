@@ -44,6 +44,9 @@ const portfolioMemories = [
    { id: 7, image: "/images/player2.png", caption: "Historic Goal" },
   { id: 8, image: "/images/player3.png", caption: "Celebrations" },
   { id: 9, image: "/images/how-it-works-bg.jpg", caption: "Iconic Moments" },
+   { id: 10, image: "/images/player2.png", caption: "Historic Goal" },
+  { id: 11, image: "/images/player3.png", caption: "Celebrations" },
+  { id: 12, image: "/images/how-it-works-bg.jpg", caption: "Iconic Moments" },
 ]
 
 // ---------- Utility: respect reduced motion ----------
@@ -256,7 +259,7 @@ const PortfolioMemoriesSection = React.forwardRef((props, ref) => (
           transition={{ duration: 0.6 }}
           className="text-3xl md:text-4xl font-semibold text-[#0B1B32]"
         >
-          Portfolio Memories
+          Events Memories
         </motion.h2>
         <motion.p
           initial={{ opacity: 0 }}

@@ -1,16 +1,18 @@
 // src/pages/Matches.jsx
 import React, { useState, useEffect } from "react"
-import {
-  Search,
-  SportsSoccer,
-  ConfirmationNumber,
-} from "@mui/icons-material"
+import { Search, SportsSoccer, ConfirmationNumber } from "@mui/icons-material"
 import { useMatches } from "../../hooks/useFirebase"
 import MatchCard from "../../components/MatchCard"
 import { PageLoader } from "../../components/LoadingSpinner"
 import { motion } from "framer-motion"
 import { useAuth } from "../../context/AuthContext"
 import { useNavigate } from "react-router-dom"
+
+// ✅ Apple system font
+const appleFont = {
+  fontFamily:
+    '"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+}
 
 const Matches = () => {
   const { matches, loading, error } = useMatches()
@@ -22,22 +24,14 @@ const Matches = () => {
   const [sortBy, setSortBy] = useState("date")
   const [filteredMatches, setFilteredMatches] = useState([])
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [offsetY, setOffsetY] = useState(0)
 
-  // Parallax background
-  useEffect(() => {
-    const handleScroll = () => setOffsetY(window.scrollY * 0.3)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  // Auto update time
+  // Auto update clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
     return () => clearInterval(timer)
   }, [])
 
-  // Filtering + Sorting logic
+  // Filtering + sorting
   useEffect(() => {
     if (matches) {
       const filtered = matches.filter((match) => {
@@ -50,7 +44,6 @@ const Matches = () => {
           ? match.match_date.toDate()
           : new Date(match.match_date)
 
-        // Only exclude past matches when filter is not "all"
         if (dateFilter !== "all" && matchDate < currentTime) return false
 
         const matchesDate =
@@ -109,52 +102,46 @@ const Matches = () => {
 
   return (
     <section
-      className="relative py-20 bg-cover bg-center min-h-screen overflow-hidden"
-      style={{
-        backgroundImage: "url('/images/stadium-bg.jpg')",
-        backgroundPositionY: `${offsetY}px`,
-      }}
+      className="relative w-full min-h-screen bg-[#f5f5f7] py-20"
+      style={appleFont}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+      {/* Header */}
+      <motion.div
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="text-center mb-16"
+      >
+        <h1 className="text-5xl font-semibold tracking-tight mb-4">
+          Upcoming Matches
+        </h1>
+        <p className="text-lg text-gray-600">
+          Book your seats for Kenya’s most exciting football fixtures
+        </p>
+        <p className="text-sm text-gray-400 mt-2">
+          Last updated: {currentTime.toLocaleTimeString()}
+        </p>
+      </motion.div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        {/* Header */}
-        <motion.div
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="text-center"
-        >
-          <h1 className="text-5xl font-semibold text-white drop-shadow mb-4">
-            Upcoming Matches
-          </h1>
-          <p className="text-white/80 text-lg">
-            Book your tickets for the most exciting football fixtures in Kenya
-          </p>
-          <div className="text-white/60 text-sm mt-2">
-            Last updated: {currentTime.toLocaleTimeString()}
-          </div>
-        </motion.div>
-
+      <div className="max-w-7xl mx-auto px-6 space-y-12">
         {/* Filters */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl shadow-md p-6"
+          className="bg-[#15291c] rounded-3xl shadow-md border border-gray-700 p-6 text-white"
         >
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Search */}
             <div className="lg:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 h-5 w-5" />
                 <input
                   type="text"
-                  placeholder="Search matches by teams or venue..."
+                  placeholder="Search matches by team or venue..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-full border border-gray-300 bg-white/70 backdrop-blur-sm py-2 pl-10 pr-4 focus:ring-2 focus:ring-[#83A6CE] focus:outline-none text-sm text-[#0B1B32]"
+                  className="w-full rounded-full border border-gray-500 bg-[#1f3a29] text-white placeholder-gray-400 py-2 pl-10 pr-4 focus:ring-2 focus:ring-green-400 focus:outline-none text-sm"
                 />
               </div>
             </div>
@@ -164,12 +151,12 @@ const Matches = () => {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full rounded-full border border-gray-300 bg-white/70 backdrop-blur-sm py-2 px-4 focus:ring-2 focus:ring-[#83A6CE] text-sm text-[#0B1B32]"
+                className="w-full rounded-full border border-gray-500 bg-[#1f3a29] text-white py-2 px-4 focus:ring-2 focus:ring-green-400 text-sm"
               >
                 <option value="upcoming">Upcoming</option>
                 <option value="today">Today</option>
                 <option value="week">Next 7 Days</option>
-                <option value="all">All Future Matches</option>
+                <option value="all">All Matches</option>
               </select>
             </div>
 
@@ -178,39 +165,34 @@ const Matches = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full rounded-full border border-gray-300 bg-white/70 backdrop-blur-sm py-2 px-4 focus:ring-2 focus:ring-[#83A6CE] text-sm text-[#0B1B32]"
+                className="w-full rounded-full border border-gray-500 bg-[#1f3a29] text-white py-2 px-4 focus:ring-2 focus:ring-green-400 text-sm"
               >
                 <option value="date">Sort by Date</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
+                <option value="price-low">Price: Low → High</option>
+                <option value="price-high">Price: High → Low</option>
                 <option value="availability">Availability</option>
               </select>
             </div>
           </div>
         </motion.div>
 
-        {/* Results Count + My Tickets */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="flex flex-col sm:flex-row justify-between items-center text-white/80 gap-4"
-        >
+        {/* Results Count + Tickets */}
+        <div className="flex flex-col sm:flex-row justify-between items-center text-gray-700 gap-4">
           <p>
             Showing {filteredMatches.length}{" "}
-            {filteredMatches.length === 1 ? "match" : "matches"}
-            {matches && ` (${matches.length} total)`}
+            {filteredMatches.length === 1 ? "match" : "matches"}{" "}
+            {matches && `(${matches.length} total)`}
           </p>
 
           <button
             onClick={() => (user ? navigate("/tickets") : navigate("/login"))}
             className="flex items-center gap-2 px-5 py-2 rounded-full font-medium 
-                       bg-[#0B1B32] text-white hover:bg-[#13294B] transition"
+                       bg-black text-white hover:bg-gray-900 transition"
           >
             <ConfirmationNumber className="h-5 w-5" />
             My Tickets
           </button>
-        </motion.div>
+        </div>
 
         {/* Matches Grid */}
         {filteredMatches.length > 0 ? (
@@ -248,15 +230,15 @@ const Matches = () => {
         ) : (
           <div className="text-center py-16">
             <SportsSoccer className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
               {matches?.length === 0
                 ? "No Matches Available"
                 : "No Matches Found"}
             </h3>
-            <p className="text-white/80 mb-6">
+            <p className="text-gray-500 mb-6">
               {matches?.length === 0
                 ? "Check back later for new fixtures"
-                : "Try adjusting your search or filters"}
+                : "Try adjusting your filters"}
             </p>
             <button
               onClick={() => {
@@ -264,23 +246,25 @@ const Matches = () => {
                 setDateFilter("upcoming")
                 setSortBy("date")
               }}
-              className="px-6 py-2 rounded-full font-medium bg-white/30 text-white backdrop-blur-md border border-white/50 hover:bg-white/40 transition"
+              className="px-6 py-2 rounded-full font-medium bg-gray-900 text-white hover:bg-black transition"
             >
               Clear Filters
             </button>
           </div>
         )}
 
-        {/* Match Status Legend */}
+        {/* Status Legend */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl p-6"
+          className="bg-white/60 backdrop-blur-xl border border-gray-200 rounded-2xl p-6"
         >
-          <h4 className="font-semibold mb-4 text-white">Match Status Legend</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/90">
+          <h4 className="font-semibold mb-4 text-gray-900">
+            Match Status Legend
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full" />
               <span>Available - Plenty of seats left</span>
