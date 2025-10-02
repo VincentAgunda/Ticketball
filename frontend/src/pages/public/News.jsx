@@ -89,17 +89,30 @@ const News = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [selected, setSelected] = useState(null)
 
+  // Detect mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const mq = window.matchMedia("(max-width: 768px)")
+    const onChange = (e) => setIsMobile(e.matches)
+    setIsMobile(mq.matches)
+    if (mq.addEventListener) {
+      mq.addEventListener("change", onChange)
+      return () => mq.removeEventListener("change", onChange)
+    }
+    mq.addListener(onChange)
+    return () => mq.removeListener(onChange)
+  }, [])
+
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-
     const handleScroll = () => {
       const scrollLeft = container.scrollLeft
       const width = container.offsetWidth
       const index = Math.round(scrollLeft / width)
       setActiveIndex(index)
     }
-
     container.addEventListener("scroll", handleScroll)
     return () => container.removeEventListener("scroll", handleScroll)
   }, [])
@@ -128,54 +141,72 @@ const News = () => {
       <div
         ref={containerRef}
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
-        style={{ scrollSnapType: "x mandatory" }}
+        style={{
+          scrollSnapType: "x mandatory",
+          willChange: "scroll-position",
+        }}
       >
-        {newsArticles.map((article, index) => (
-          <motion.div
-            key={article.id}
-            initial={{ opacity: 0.5, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            viewport={{ amount: 0.6, once: false }}
-            className={`relative rounded-3xl overflow-hidden flex-shrink-0 snap-center flex flex-col justify-between p-6 shadow-md ${
-              bgShades[index % bgShades.length]
-            } ${index === 0 ? "ml-6" : ""} ${
-              index === newsArticles.length - 1 ? "mr-6" : "mr-5"
-            }`}
-            style={{
-              width: "90%",
-              maxWidth: "380px",
-              minHeight: "500px",
-            }}
-          >
-            {/* Title */}
-            <div>
-              <h3 className="text-3xl font-semibold leading-snug">
-                {article.title}
-              </h3>
-              <p className="text-lg sm:text-xl font-medium mt-2 opacity-90">
-                {article.subtitle}
-              </p>
-            </div>
+        {newsArticles.map((article, index) => {
+          // 🔹 On mobile: no animation at all (cards just appear)
+          const mobileMotionProps = {
+            initial: false,
+            animate: false,
+          }
 
-            {/* Static Image */}
-            <div className="flex items-center justify-center flex-1 relative">
-              <img
-                src={article.image}
-                alt={article.title}
-                className="h-full object-contain drop-shadow-xl"
-              />
-            </div>
+          // 🔹 Desktop: keep fade + scale
+          const desktopMotionProps = {
+            initial: { opacity: 0.5, scale: 0.9 },
+            whileInView: { opacity: 1, scale: 1 },
+            transition: { duration: 0.6, ease: "easeOut" },
+            viewport: { amount: 0.6, once: false },
+          }
 
-            {/* Bold Plus button */}
-            <button
-              onClick={() => setSelected(article)}
-              className="absolute bottom-5 right-5 w-10 h-10 flex items-center justify-center rounded-full border-2 font-bold text-lg border-current hover:bg-current hover:text-white transition transform hover:scale-110"
+          const motionProps = isMobile ? mobileMotionProps : desktopMotionProps
+
+          return (
+            <motion.div
+              key={article.id}
+              {...motionProps}
+              style={{
+                willChange: isMobile ? "auto" : "transform, opacity",
+                width: "90%",
+                maxWidth: "380px",
+                minHeight: "500px",
+              }}
+              className={`relative rounded-3xl overflow-hidden flex-shrink-0 snap-center flex flex-col justify-between p-6 shadow-md ${bgShades[index % bgShades.length]} ${
+                index === 0 ? "ml-6" : ""
+              } ${index === newsArticles.length - 1 ? "mr-6" : "mr-5"}`}
             >
-              <Plus size={22} strokeWidth={3} />
-            </button>
-          </motion.div>
-        ))}
+              {/* Title */}
+              <div>
+                <h3 className="text-3xl font-semibold leading-snug">
+                  {article.title}
+                </h3>
+                <p className="text-lg sm:text-xl font-medium mt-2 opacity-90">
+                  {article.subtitle}
+                </p>
+              </div>
+
+              {/* Image (static, no animation) */}
+              <div className="flex items-center justify-center flex-1 relative">
+                <img
+                  src={article.image}
+                  alt={article.title}
+                  className="h-full object-contain drop-shadow-xl"
+                  style={{ willChange: "auto" }}
+                />
+              </div>
+
+              {/* Plus button */}
+              <button
+                onClick={() => setSelected(article)}
+                className="absolute bottom-5 right-5 w-10 h-10 flex items-center justify-center rounded-full border-2 font-bold text-lg border-current hover:bg-current hover:text-white transition transform hover:scale-110"
+              >
+                <Plus size={22} strokeWidth={3} />
+              </button>
+            </motion.div>
+          )
+        })}
       </div>
 
       {/* Pagination Dots */}
