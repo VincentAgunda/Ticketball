@@ -10,6 +10,7 @@ import Home from "./pages/public/Home"
 import Matches from "./pages/public/Matches"
 import News from "./pages/public/News"
 import Booking from "./pages/public/Booking"
+import FootballHero from "./pages/public/FootballHero"
 
 // Auth-related pages
 import Tickets from "./pages/public/Tickets"
@@ -87,6 +88,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/matches" element={<Matches />} />
             <Route path="/news" element={<News />} />
+            <Route path="/footballhero" element={< FootballHero/>} />
 
             {/* Booking (accessible even without login) */}
             <Route path="/booking/:matchId" element={<Booking />} />

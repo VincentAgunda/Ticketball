@@ -102,7 +102,7 @@ const Matches = () => {
 
   return (
     <section
-      className="relative w-full min-h-screen bg-[#f5f5f7] py-20"
+      className="relative w-full min-h-screen bg-[#e5e5e5] py-20"
       style={appleFont}
     >
       {/* Header */}
@@ -112,7 +112,7 @@ const Matches = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="text-center mb-16"
       >
-        <h1 className="text-5xl font-semibold tracking-tight mb-4">
+        <h1 className="text-5xl font-semibold tracking-tight mb-4 text-[#15291c]">
           Upcoming Matches
         </h1>
         <p className="text-lg text-gray-600">
@@ -129,7 +129,7 @@ const Matches = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-[#15291c] rounded-3xl shadow-md border border-gray-700 p-6 text-white"
+          className="bg-[#15291c] text-white rounded-3xl shadow-md border border-gray-700 p-6"
         >
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Search */}
@@ -141,7 +141,7 @@ const Matches = () => {
                   placeholder="Search matches by team or venue..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-full border border-gray-500 bg-[#1f3a29] text-white placeholder-gray-400 py-2 pl-10 pr-4 focus:ring-2 focus:ring-green-400 focus:outline-none text-sm"
+                  className="w-full rounded-full border border-gray-500 bg-[#1f3a29] py-2 pl-10 pr-4 focus:ring-2 focus:ring-white/60 focus:outline-none text-sm text-white placeholder-gray-400"
                 />
               </div>
             </div>
@@ -151,7 +151,7 @@ const Matches = () => {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full rounded-full border border-gray-500 bg-[#1f3a29] text-white py-2 px-4 focus:ring-2 focus:ring-green-400 text-sm"
+                className="w-full rounded-full border border-gray-500 bg-[#1f3a29] py-2 px-4 focus:ring-2 focus:ring-white/60 text-sm text-white"
               >
                 <option value="upcoming">Upcoming</option>
                 <option value="today">Today</option>
@@ -165,7 +165,7 @@ const Matches = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full rounded-full border border-gray-500 bg-[#1f3a29] text-white py-2 px-4 focus:ring-2 focus:ring-green-400 text-sm"
+                className="w-full rounded-full border border-gray-500 bg-[#1f3a29] py-2 px-4 focus:ring-2 focus:ring-white/60 text-sm text-white"
               >
                 <option value="date">Sort by Date</option>
                 <option value="price-low">Price: Low → High</option>
@@ -259,12 +259,12 @@ const Matches = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="bg-white/60 backdrop-blur-xl border border-gray-200 rounded-2xl p-6"
+          className="bg-[#15291c] text-white border border-gray-700 rounded-2xl p-6"
         >
-          <h4 className="font-semibold mb-4 text-gray-900">
+          <h4 className="font-semibold mb-4 text-white">
             Match Status Legend
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-200">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full" />
               <span>Available - Plenty of seats left</span>

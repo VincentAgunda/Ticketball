@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Plus, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { useMatches } from "../../hooks/useFirebase"
 import News from "./News" 
+import FootballHero from "./FootballHero"
 
 // Lazy-load heavy components to speed initial paint
 const MatchCard = React.lazy(() => import("../../components/MatchCard"))
@@ -164,7 +165,7 @@ const PlayersSection = React.memo(() => {
             transition={{ duration: 0.6 }}
             className="text-3xl md:text-4xl font-semibold mb-2 text-[#0B1B32]"
           >
-            Our Top Players
+            TALENTS
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -481,9 +482,11 @@ const Home = () => {
           <div className="text-center py-8 text-gray-600">No upcoming matches at the moment.</div>
         )}
       </motion.section>
+      <FootballHero />
 
       <PortfolioMemoriesSection ref={howItWorksRef} />
        <News />
+       
 
       <RealTimeNotice />
       <BackToTopButton />
