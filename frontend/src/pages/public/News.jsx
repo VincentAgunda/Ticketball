@@ -1,6 +1,6 @@
 // src/pages/public/News.jsx
 import React, { useRef, useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import { Plus, X } from "lucide-react"
 
 const appleFont = {
@@ -23,48 +23,64 @@ const newsArticles = [
     title: "Champions League Final",
     subtitle: "What to Expect.",
     image: "/images/vin3.png",
+    content:
+      "The UEFA Champions League Final is the pinnacle of European club football, where two of the continent's best teams battle for glory. This year's final promises to be an electrifying encounter, with tactical masterclasses and individual brilliance expected from both sides. Fans can anticipate a high-octane match, filled with dramatic moments and potential upsets. Key players will be under immense pressure to perform, and the atmosphere in the stadium will be nothing short of breathtaking. Don't miss this clash of titans!",
   },
   {
     id: 2,
     title: "Rising Stars.",
     subtitle: "Young Players to Watch.",
     image: "/images/vin3.png",
+    content:
+      "Football is constantly evolving, and a new generation of talent is emerging, ready to take the world by storm. From electrifying wingers to composed defenders, these young players are making a significant impact in their respective leagues. Keep an eye on the likes of wonderkid 'Phenom Jr.' known for his dazzling dribbling, and the midfield maestro 'Architect' who dictates play with his incredible vision. Their potential is limitless, and they are set to redefine the future of the beautiful game.",
   },
   {
     id: 3,
     title: "Behind the Scenes.",
     subtitle: "Match Day Moments.",
     image: "/images/vin3.png",
+    content:
+      "Ever wondered what goes on before, during, and after a major football match? Our exclusive 'Behind the Scenes' look reveals the meticulous preparations, the intense locker room speeches, and the raw emotions that unfold on match day. From the ground staff ensuring a perfect pitch to the coaches fine-tuning their strategies, every detail contributes to the spectacle. Experience the adrenaline of the tunnel walk, the roar of the crowd, and the celebrations (or commiserations) after the final whistle.",
   },
   {
     id: 4,
     title: "Legends of the Game.",
     subtitle: "Stories That Inspire.",
     image: "/images/vin3.png",
+    content:
+      "Football is rich with history and filled with unforgettable legends whose stories continue to inspire millions. From Pelé's magical touch to Maradona's 'Hand of God' and Messi's record-breaking feats, these icons have shaped the sport. This series delves into their personal journeys, their struggles, triumphs, and the moments that cemented their place in football folklore. Discover how their dedication, passion, and sheer talent transcended the game itself, leaving an indelible mark on generations.",
   },
   {
     id: 5,
     title: "Transfers 2025.",
     subtitle: "Big Moves Ahead.",
     image: "/images/vin3.png",
+    content:
+      "The transfer window for 2025 is already generating buzz, with rumors swirling about potential blockbuster moves that could reshape top teams. Clubs are strategizing to strengthen their squads, and players are looking for new challenges or lucrative contracts. Will a superstar forward switch allegiances? Will a promising midfielder make a surprise move? We analyze the financial implications, the tactical fits, and the ripple effects these transfers could have across the footballing landscape. Stay tuned for all the breaking news!",
   },
   {
     id: 6,
     title: "Next Gen Coaches.",
     subtitle: "Changing Football.",
     image: "/images/vin3.png",
+    content:
+      "A new breed of tacticians is emerging, bringing fresh ideas and innovative approaches to football management. These 'Next Gen Coaches' are challenging traditional methodologies, focusing on data analytics, psychological conditioning, and fluid systems. Discover how their forward-thinking philosophies are revolutionizing training sessions, match strategies, and player development. They are not just winning games; they are changing the very fabric of how football is played and perceived.",
   },
   {
     id: 7,
     title: "Training Insights.",
     subtitle: "Secrets from Pros.",
-    image: "/images/vin3.png",
+    image: "/images/news/training.png",
+    content:
+      "Ever wondered how professional footballers maintain peak performance? Our 'Training Insights' segment uncovers the rigorous routines, specialized drills, and dietary secrets that keep elite athletes at the top of their game. From high-intensity interval training to recovery protocols and mental conditioning, every aspect is meticulously planned. Learn directly from top pros and their coaches about the dedication required to excel, and gain tips you can apply to your own fitness journey.",
   },
   {
     id: 8,
     title: "Fan Culture.",
     subtitle: "The Heart of the Game.",
-    image: "/images/vin3.png",
+    image: "/images/news/fans.png",
+    content:
+      "Football is nothing without its fans. From the passionate chants echoing in stadiums to the vibrant displays of tifo and unwavering support through thick and thin, 'Fan Culture' is the lifeblood of the sport. This article explores the unique traditions, rivalries, and camaraderie that define supporter groups around the world. We celebrate the incredible energy and dedication of fans who travel miles, brave all weather, and create an atmosphere that truly makes football 'the beautiful game'.",
   },
 ]
 
@@ -77,8 +93,6 @@ const News = () => {
     const container = containerRef.current
     if (!container) return
 
-    // Note: This scroll logic assumes each card takes up the full container width.
-    // For a more accurate implementation, you might need to calculate the width of each card + its margin.
     const handleScroll = () => {
       const scrollLeft = container.scrollLeft
       const width = container.offsetWidth
@@ -113,21 +127,16 @@ const News = () => {
       {/* Scrollable Apple-style cards */}
       <div
         ref={containerRef}
-        // MODIFICATION: Removed `px-6` to make the container full-bleed edge-to-edge.
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
         style={{ scrollSnapType: "x mandatory" }}
       >
         {newsArticles.map((article, index) => (
           <motion.div
             key={article.id}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-            viewport={{ once: true }}
-            // MODIFICATION: Added conditional margins for a full-bleed layout.
-            // - ml-6 on the first item for initial padding.
-            // - mr-5 for the gap between items.
-            // - mr-6 on the last item for end padding.
+            initial={{ opacity: 0.5, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            viewport={{ amount: 0.6, once: false }}
             className={`relative rounded-3xl overflow-hidden flex-shrink-0 snap-center flex flex-col justify-between p-6 shadow-md ${
               bgShades[index % bgShades.length]
             } ${index === 0 ? "ml-6" : ""} ${
@@ -137,7 +146,6 @@ const News = () => {
               width: "90%",
               maxWidth: "380px",
               minHeight: "500px",
-              // MODIFICATION: Removed marginRight from here to be handled by className.
             }}
           >
             {/* Title */}
@@ -152,10 +160,12 @@ const News = () => {
 
             {/* Floating image */}
             <div className="flex items-center justify-center flex-1 relative">
-              <img
+              <motion.img
                 src={article.image}
                 alt={article.title}
-                className="max-h-[60%] object-contain drop-shadow-xl"
+                className="h-full object-contain drop-shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
               />
             </div>
 
@@ -187,33 +197,43 @@ const News = () => {
       <AnimatePresence>
         {selected && (
           <motion.div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
+              initial={{ y: "100vh" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100vh" }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl"
+              className="relative bg-white rounded-none w-full h-full overflow-y-auto shadow-2xl"
             >
               <button
                 onClick={() => setSelected(null)}
-                className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white transition"
+                className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white transition z-10"
               >
                 <X size={20} strokeWidth={3} />
               </button>
-              <h3 className="text-3xl font-semibold mb-4">
-                {selected.title}
-              </h3>
-              <p className="text-lg mb-6">{selected.subtitle}</p>
-              <img
-                src={selected.image}
-                alt={selected.title}
-                className="w-full max-h-[300px] object-contain drop-shadow-xl"
-              />
+              <div className="p-8 max-w-4xl mx-auto">
+                <h3 className="text-4xl font-semibold mb-4">
+                  {selected.title}
+                </h3>
+                <p className="text-xl font-medium mb-6 opacity-90">
+                  {selected.subtitle}
+                </p>
+                <img
+                  src={selected.image}
+                  alt={selected.title}
+                  className="w-full object-cover mb-8 rounded-lg shadow-md"
+                />
+                <p className="text-lg leading-relaxed text-gray-700">
+                  {selected.content}
+                </p>
+                <div className="mt-10 pt-6 border-t border-gray-200 text-sm text-gray-500">
+                  Published: October 26, 2023
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}
