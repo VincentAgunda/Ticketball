@@ -165,7 +165,7 @@ const PlayersSection = React.memo(() => {
             transition={{ duration: 0.6 }}
             className="text-3xl md:text-4xl font-semibold mb-2 text-[#0B1B32]"
           >
-            TALENTS
+            Talents
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -207,7 +207,7 @@ const PlayersSection = React.memo(() => {
                 </div>
                 <button
                   aria-label={`View ${player.name}`}
-                  className="absolute bottom-6 right-6 w-10 h-10 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg"
+                  className="absolute bottom-6 right-6 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg"
                 >
                   <Plus size={18} />
                 </button>
@@ -280,7 +280,7 @@ const PortfolioMemoriesSection = React.forwardRef((props, ref) => (
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: i * 0.08 }}
-            className="relative group rounded-2xl overflow-hidden shadow-sm bg-white"
+            className="relative group rounded-md overflow-hidden shadow-sm bg-white"
           >
             <img src={item.image} alt={item.caption} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
@@ -429,7 +429,7 @@ const Home = () => {
             whileInView={{ x: 0, opacity: 1 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.7, delay: 0.05 }}
-            className="rounded-3xl p-6 bg-white shadow-xl border border-gray-100"
+            className="rounded-2xl p-6 bg-white shadow-xl border border-gray-100"
           >
             <div className="flex items-center space-x-3 mb-4">
               <SportsSoccer className="h-7 w-7 text-[#0B1B32]" />

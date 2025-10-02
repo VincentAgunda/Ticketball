@@ -70,18 +70,23 @@ View your ticket online: ${window.location.origin}/tickets/${ticket.id}`
   }
 
   return (
-    <div className="rounded-3xl shadow-sm border border-gray-200/60 overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-gray-900 to-gray-800">
-      <div className="p-6">
+    <div className="rounded-3xl shadow-lg border border-gray-200/20 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 
+      bg-gradient-to-r from-green-700 via-green-600 to-blue-700 relative">
+      
+      {/* subtle overlay to give Apple-like smooth shade */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none"></div>
+
+      <div className="relative p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* QR Code + Ticket ID */}
           <div className="flex flex-col items-center justify-center">
             <div className="mb-4 text-center">
-              <p className="text-sm text-gray-300 mb-1">Scan QR Code</p>
-              <p className="text-xs text-gray-400">at stadium entrance</p>
+              <p className="text-sm text-gray-200 mb-1">Scan QR Code</p>
+              <p className="text-xs text-gray-300">at stadium entrance</p>
             </div>
             <TicketQR ticket={ticket} size={140} />
             <div className="mt-4 text-center">
-              <p className="text-xs text-gray-300">Ticket ID</p>
+              <p className="text-xs text-gray-200">Ticket ID</p>
               <p className="font-mono font-bold text-white text-sm">
                 {ticket.id?.slice(0, 8).toUpperCase() || 'N/A'}
               </p>
@@ -94,36 +99,36 @@ View your ticket online: ${window.location.origin}/tickets/${ticket.id}`
             <div className="flex justify-between items-center mb-6">
               {/* Home Team */}
               <div className="text-center flex-1 group">
-                <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+                <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-green-500/40 to-transparent backdrop-blur-md shadow-lg">
                   <img
                     src={getTeamLogo(ticket.match.home_team)}
                     alt={ticket.match.home_team}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    className="w-full h-full object-contain mix-blend-screen transition-transform duration-300 group-hover:scale-110"
                   />
                 </div>
-                <h3 className="mt-2 font-semibold text-white text-sm md:text-base">
+                <h3 className="mt-2 font-semibold text-white text-sm md:text-base drop-shadow-md">
                   {ticket.match.home_team}
                 </h3>
               </div>
 
-              <div className="px-4 text-gray-300 font-medium">vs</div>
+              <div className="px-4 text-gray-200 font-medium">vs</div>
 
               {/* Away Team */}
               <div className="text-center flex-1 group">
-                <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+                <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-blue-500/40 to-transparent backdrop-blur-md shadow-lg">
                   <img
                     src={getTeamLogo(ticket.match.away_team)}
                     alt={ticket.match.away_team}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    className="w-full h-full object-contain mix-blend-screen transition-transform duration-300 group-hover:scale-110"
                   />
                 </div>
-                <h3 className="mt-2 font-semibold text-white text-sm md:text-base">
+                <h3 className="mt-2 font-semibold text-white text-sm md:text-base drop-shadow-md">
                   {ticket.match.away_team}
                 </h3>
               </div>
 
               <span
-                className={`ml-4 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                className={`ml-4 px-3 py-1 rounded-full text-sm font-medium shadow ${getStatusColor(
                   ticket.status
                 )}`}
               >
@@ -133,26 +138,26 @@ View your ticket online: ${window.location.origin}/tickets/${ticket.id}`
 
             {/* Ticket Details */}
             <div className="space-y-3 text-sm mb-4">
-              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-                <CalendarToday className="h-5 w-5 text-yellow-400" />
+              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded-lg backdrop-blur-sm">
+                <CalendarToday className="h-5 w-5 text-yellow-300" />
                 <div>
-                  <p className="text-gray-300 text-xs">Date & Time</p>
+                  <p className="text-gray-200 text-xs">Date & Time</p>
                   <p className="text-white font-semibold">{formatDate(ticket.match.match_date)}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-                <LocationOn className="h-5 w-5 text-yellow-400" />
+              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded-lg backdrop-blur-sm">
+                <LocationOn className="h-5 w-5 text-yellow-300" />
                 <div>
-                  <p className="text-gray-300 text-xs">Venue</p>
+                  <p className="text-gray-200 text-xs">Venue</p>
                   <p className="text-white font-semibold">{ticket.match.venue}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-                <EventSeat className="h-5 w-5 text-yellow-400" />
+              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded-lg backdrop-blur-sm">
+                <EventSeat className="h-5 w-5 text-yellow-300" />
                 <div>
-                  <p className="text-gray-300 text-xs">Seat Number</p>
+                  <p className="text-gray-200 text-xs">Seat Number</p>
                   <p className="text-white font-semibold">
                     {ticket.seat_number}
                     {ticket.seat_type && (
@@ -164,23 +169,23 @@ View your ticket online: ${window.location.origin}/tickets/${ticket.id}`
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-                <ConfirmationNumber className="h-5 w-5 text-yellow-400" />
+              <div className="flex items-center space-x-3 p-2 bg-black/30 rounded-lg backdrop-blur-sm">
+                <ConfirmationNumber className="h-5 w-5 text-yellow-300" />
                 <div>
-                  <p className="text-gray-300 text-xs">Price</p>
+                  <p className="text-gray-200 text-xs">Price</p>
                   <p className="text-white font-semibold">{formatCurrency(ticket.price)}</p>
                 </div>
               </div>
             </div>
 
             {/* SMS Section */}
-            <div className="mt-4 p-3 bg-black/40 rounded-lg border border-gray-600">
+            <div className="mt-4 p-3 bg-black/40 rounded-lg border border-gray-600 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-200 flex items-center">
-                    <Sms className="h-4 w-4 mr-2 text-blue-400" />
+                  <p className="text-sm text-gray-100 flex items-center">
+                    <Sms className="h-4 w-4 mr-2 text-blue-300" />
                     <strong>SMS Notification:</strong>
-                    <span className="ml-2 text-yellow-400">Click to send confirmation SMS</span>
+                    <span className="ml-2 text-yellow-300">Click to send confirmation SMS</span>
                   </p>
                   {smsStatus && (
                     <p
@@ -200,7 +205,7 @@ View your ticket online: ${window.location.origin}/tickets/${ticket.id}`
                 <button
                   onClick={handleSendSMS}
                   disabled={sendingSms || !user?.phoneNumber}
-                  className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition text-sm"
+                  className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 transition text-sm"
                 >
                   <Sms className="h-4 w-4" />
                   <span>{sendingSms ? 'Sending...' : 'Send SMS'}</span>
@@ -212,14 +217,14 @@ View your ticket online: ${window.location.origin}/tickets/${ticket.id}`
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-gray-700 bg-black/40 flex justify-between items-center">
-        <div className="text-sm text-gray-300">
+      <div className="px-6 py-4 border-t border-gray-700 bg-black/30 flex justify-between items-center backdrop-blur-sm">
+        <div className="text-sm text-gray-200">
           <span>Purchased on {formatDate(ticket.created_at)}</span>
         </div>
         <button
           onClick={handleDownloadTicket}
           disabled={downloading}
-          className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg font-semibold hover:bg-yellow-400 disabled:opacity-50 transition"
+          className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg font-semibold hover:bg-yellow-400 disabled:opacity-50 transition shadow"
         >
           <Download className="h-5 w-5" />
           <span>{downloading ? 'Downloading...' : 'Download Ticket'}</span>
