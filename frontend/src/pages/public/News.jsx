@@ -1,6 +1,6 @@
 // src/pages/public/News.jsx
 import React, { useRef, useState, useEffect } from "react"
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Plus, X } from "lucide-react"
 
 const appleFont = {
@@ -87,7 +87,7 @@ const newsArticles = [
 const News = () => {
   const containerRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [selected, setSelected] = useState(null) // For expanded card modal
+  const [selected, setSelected] = useState(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -158,14 +158,12 @@ const News = () => {
               </p>
             </div>
 
-            {/* Floating image */}
+            {/* Static Image */}
             <div className="flex items-center justify-center flex-1 relative">
-              <motion.img
+              <img
                 src={article.image}
                 alt={article.title}
                 className="h-full object-contain drop-shadow-xl"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15 }}
               />
             </div>
 
