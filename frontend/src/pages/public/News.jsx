@@ -89,7 +89,7 @@ const News = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [selected, setSelected] = useState(null)
 
-  // Detect mobile
+  // Detect mobile so we only apply the optimizations on smaller screens
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -107,12 +107,14 @@ const News = () => {
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+
     const handleScroll = () => {
       const scrollLeft = container.scrollLeft
       const width = container.offsetWidth
       const index = Math.round(scrollLeft / width)
       setActiveIndex(index)
     }
+
     container.addEventListener("scroll", handleScroll)
     return () => container.removeEventListener("scroll", handleScroll)
   }, [])
@@ -147,13 +149,7 @@ const News = () => {
         }}
       >
         {newsArticles.map((article, index) => {
-          // 🔹 On mobile: no animation at all (cards just appear)
-          const mobileMotionProps = {
-            initial: false,
-            animate: false,
-          }
-
-          // 🔹 Desktop: keep fade + scale
+          // Motion props for desktop (animations)
           const desktopMotionProps = {
             initial: { opacity: 0.5, scale: 0.9 },
             whileInView: { opacity: 1, scale: 1 },
@@ -161,10 +157,12 @@ const News = () => {
             viewport: { amount: 0.6, once: false },
           }
 
-          const motionProps = isMobile ? mobileMotionProps : desktopMotionProps
+          // If mobile: just render with no animation
+          const MotionWrapper = isMobile ? "div" : motion.div
+          const motionProps = isMobile ? {} : desktopMotionProps
 
           return (
-            <motion.div
+            <MotionWrapper
               key={article.id}
               {...motionProps}
               style={{
@@ -187,7 +185,7 @@ const News = () => {
                 </p>
               </div>
 
-              {/* Image (static, no animation) */}
+              {/* Image */}
               <div className="flex items-center justify-center flex-1 relative">
                 <img
                   src={article.image}
@@ -204,7 +202,7 @@ const News = () => {
               >
                 <Plus size={22} strokeWidth={3} />
               </button>
-            </motion.div>
+            </MotionWrapper>
           )
         })}
       </div>
