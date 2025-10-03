@@ -43,9 +43,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   if (requireAdmin && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-red-600">
-          Access denied. Admin privileges required.
-        </div>
+        <div className="text-lg text-red-600">Access denied. Admin privileges required.</div>
       </div>
     )
   }
@@ -88,7 +86,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/matches" element={<Matches />} />
             <Route path="/news" element={<News />} />
-            <Route path="/footballhero" element={< FootballHero/>} />
+            <Route path="/footballhero" element={<FootballHero />} />
 
             {/* Booking (accessible even without login) */}
             <Route path="/booking/:matchId" element={<Booking />} />
