@@ -1,4 +1,3 @@
-// src/pages/public/Home.jsx
 import React, { useMemo, useRef, Suspense } from "react"
 import { Link } from "react-router-dom"
 import { SportsSoccer, ArrowUpward } from "@mui/icons-material"
@@ -9,15 +8,16 @@ import FootballHero from "./FootballHero"
 import TalentsSection from "./TalentsSection"
 import EventsMemoriesSection from "./EventsMemoriesSection"
 import CallToAction from "./CallToAction"
+// ✅ OPTIMIZATION: Import MatchCard directly.
+// Lazy loading individual list items causes stutter on scroll as each one loads separately.
+import MatchCard from "../../components/MatchCard"
 
-
-// Lazy-load heavy components to speed initial paint
-const MatchCard = React.lazy(() => import("../../components/MatchCard"))
+// Lazy-load page-level components that are not immediately visible.
 const PageLoader = React.lazy(() =>
   import("../../components/LoadingSpinner").then((m) => ({ default: m.PageLoader || m.default }))
 )
 
-// ---------- Data (keep routes as-is) ----------
+// ---------- Data ----------
 const teamLogos = [
   { id: 1, image: "/images/how-it-works-bg.jpg" },
   { id: 2, image: "/images/afc.png" },
@@ -29,7 +29,7 @@ const teamLogos = [
   { id: 8, image: "/images/how-it-works-bg.jpg" },
 ]
 
-// ---------- Utility: respect reduced motion ----------
+// ---------- Utility: Respect Reduced Motion ----------
 const usePrefersReducedMotion = () => {
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false)
   React.useEffect(() => {
@@ -42,11 +42,10 @@ const usePrefersReducedMotion = () => {
   return prefersReducedMotion
 }
 
-// ---------- Logos Section (memoized) ----------
+// ---------- Logos Section (Memoized) ----------
 const LogosSection = React.memo(() => {
   const prefersReducedMotion = usePrefersReducedMotion()
 
-  // Preload images for the carousel (small improvement)
   React.useEffect(() => {
     teamLogos.forEach((t) => {
       const img = new Image()
@@ -66,7 +65,6 @@ const LogosSection = React.memo(() => {
           Teams We Host
         </motion.h2>
       </div>
-
       <div className="relative w-full overflow-hidden">
         <motion.div
           className="flex gap-8 w-max px-6"
@@ -90,7 +88,7 @@ const RealTimeNotice = React.memo(() => (
     initial={{ opacity: 0, x: 20 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.6 }}
-    className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm"
+    className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-50"
     aria-live="polite"
   >
     <div className="flex items-center space-x-2">
@@ -105,16 +103,19 @@ const BackToTopButton = () => {
   const [visible, setVisible] = React.useState(false)
   React.useEffect(() => {
     const handleScroll = () => setVisible(window.scrollY > 400)
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true }) // Use passive listener for performance
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
   if (!visible) return null
+
   return (
     <motion.button
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-20 right-5 bg-[#0B1B32] text-white p-3 rounded-full shadow-lg hover:scale-110 transition"
+      className="fixed bottom-20 right-5 bg-[#0B1B32] text-white p-3 rounded-full shadow-lg hover:scale-110 transition z-50"
       aria-label="Back to top"
     >
       <ArrowUpward />
@@ -127,16 +128,13 @@ const Home = () => {
   const { matches, loading, error } = useMatches()
   const howItWorksRef = useRef(null)
 
-  // Filter and sort upcoming matches (stable & memoized)
   const upcomingMatches = useMemo(() => {
     if (!matches) return []
     const now = Date.now()
     return matches
-      .map((m) => ({ ...m }))
       .filter((match) => {
         const matchDateRaw = match.match_date?.toDate?.() || match.match_date
-        const matchTs = new Date(matchDateRaw).getTime()
-        return matchTs > now
+        return new Date(matchDateRaw).getTime() > now
       })
       .sort((a, b) => {
         const dateA = new Date(a.match_date?.toDate?.() || a.match_date).getTime()
@@ -147,6 +145,28 @@ const Home = () => {
   }, [matches])
 
   const nextMatch = upcomingMatches[0] || null
+
+  // ✅ OPTIMIZATION: Variants for staggering card animations efficiently.
+  const gridContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08, // Time delay between each child animating in
+      },
+    },
+  }
+
+  const gridItemVariants = {
+    hidden: { y: 15, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+      },
+    },
+  }
 
   if (loading) {
     return (
@@ -176,28 +196,15 @@ const Home = () => {
           {/* Left */}
           <motion.div
             initial={{ y: 24, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <motion.h1
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.05 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-4 text-white"
-            >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-4 text-white">
               Experience Football Like Never Before
-            </motion.h1>
-
-            <motion.p
-              initial={{ y: 12, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.12 }}
-              className="text-base md:text-lg text-white/90 mb-6 max-w-lg leading-relaxed"
-            >
+            </h1>
+            <p className="text-base md:text-lg text-white/90 mb-6 max-w-lg leading-relaxed">
               Book your tickets online for the hottest football matches in Kenya. Secure your seat with M-Pesa and get instant digital tickets.
-            </motion.p>
-
+            </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/matches" className="bg-[#15291c] text-white text-lg py-3 px-6 rounded-md shadow-md hover:bg-[#0b2631] transition">
                 View Matches
@@ -214,20 +221,17 @@ const Home = () => {
           {/* Right - Next Match */}
           <motion.div
             initial={{ x: 24, opacity: 0 }}
-            whileInView={{ x: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, delay: 0.05 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
             className="rounded-2xl p-6 bg-white shadow-xl border border-gray-100"
           >
             <div className="flex items-center space-x-3 mb-4">
               <SportsSoccer className="h-7 w-7 text-[#0B1B32]" />
               <h3 className="text-xl font-semibold text-[#0B1B32]">{nextMatch ? "Next Big Match" : "No Upcoming Matches"}</h3>
             </div>
-
             {nextMatch ? (
-              <Suspense fallback={<div>Loading match…</div>}>
-                <MatchCard match={nextMatch} variant="compact" />
-              </Suspense>
+              // ✅ OPTIMIZATION: Removed Suspense. MatchCard is now imported directly.
+              <MatchCard match={nextMatch} variant="compact" />
             ) : (
               <div className="text-center py-8 text-gray-600">
                 <SportsSoccer className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -246,40 +250,47 @@ const Home = () => {
       <TalentsSection />
 
       {/* Upcoming Matches */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="max-w-7xl mx-auto px-6 lg:px-8"
-      >
-        <div className="flex justify-between items-center mb-6">
+      <section className="max-w-7xl mx-auto px-6 lg:px-8">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6 }}
+            className="flex justify-between items-center mb-6"
+        >
           <h2 className="text-2xl md:text-3xl font-semibold text-[#0B1B32]">Upcoming Matches</h2>
           <Link to="/matches" className="text-[#83A6CE] hover:text-[#6d8db4] font-medium">
             View All
           </Link>
-        </div>
+        </motion.div>
 
         {upcomingMatches.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingMatches.map((match, idx) => (
-              <motion.div key={match.id} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: idx * 0.04 }}>
-                <Suspense fallback={<div className="p-6">Loading…</div>}>
-                  <MatchCard match={match} />
-                </Suspense>
+          // ✅ OPTIMIZATION: Wrap the grid in a single motion component.
+          // This uses one Intersection Observer and orchestrates child animations efficiently.
+          <motion.div
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={gridContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }} // Trigger when 10% of the grid is visible
+          >
+            {upcomingMatches.map((match) => (
+              // ✅ OPTIMIZATION: Each card is now a simple motion component using variants.
+              // No individual `whileInView` or `Suspense` for much smoother scrolling.
+              <motion.div key={match.id} variants={gridItemVariants}>
+                <MatchCard match={match} />
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           <div className="text-center py-8 text-gray-600">No upcoming matches at the moment.</div>
         )}
-      </motion.section>
+      </section>
 
       <FootballHero />
-
       <EventsMemoriesSection ref={howItWorksRef} />
       <News />
-      <CallToAction />   {/* ✅ New Section */}
+      <CallToAction />
 
       <RealTimeNotice />
       <BackToTopButton />
@@ -287,4 +298,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default Home;

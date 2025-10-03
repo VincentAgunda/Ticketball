@@ -1,4 +1,3 @@
-// src/pages/public/News.jsx
 import React, { useRef, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, X } from "lucide-react"
@@ -17,6 +16,7 @@ const bgShades = [
   "bg-[#fefefe] text-black",
 ]
 
+// ++ Added two new articles
 const newsArticles = [
   {
     id: 1,
@@ -30,7 +30,7 @@ const newsArticles = [
     id: 2,
     title: "Rising Stars.",
     subtitle: "Young Players to Watch.",
-    image: "/images/vin3.png",
+    image: "/images/calltoaction.png",
     content:
       "Football is constantly evolving, and a new generation of talent is emerging, ready to take the world by storm. From electrifying wingers to composed defenders, these young players are making a significant impact in their respective leagues. Keep an eye on the likes of wonderkid 'Phenom Jr.' known for his dazzling dribbling, and the midfield maestro 'Architect' who dictates play with his incredible vision. Their potential is limitless, and they are set to redefine the future of the beautiful game.",
   },
@@ -38,7 +38,7 @@ const newsArticles = [
     id: 3,
     title: "Behind the Scenes.",
     subtitle: "Match Day Moments.",
-    image: "/images/vin3.png",
+    image: "/images/calltoaction.png",
     content:
       "Ever wondered what goes on before, during, and after a major football match? Our exclusive 'Behind the Scenes' look reveals the meticulous preparations, the intense locker room speeches, and the raw emotions that unfold on match day. From the ground staff ensuring a perfect pitch to the coaches fine-tuning their strategies, every detail contributes to the spectacle. Experience the adrenaline of the tunnel walk, the roar of the crowd, and the celebrations (or commiserations) after the final whistle.",
   },
@@ -70,7 +70,7 @@ const newsArticles = [
     id: 7,
     title: "Training Insights.",
     subtitle: "Secrets from Pros.",
-    image: "/images/news/training.png",
+    image: "/images/football.png",
     content:
       "Ever wondered how professional footballers maintain peak performance? Our 'Training Insights' segment uncovers the rigorous routines, specialized drills, and dietary secrets that keep elite athletes at the top of their game. From high-intensity interval training to recovery protocols and mental conditioning, every aspect is meticulously planned. Learn directly from top pros and their coaches about the dedication required to excel, and gain tips you can apply to your own fitness journey.",
   },
@@ -78,9 +78,25 @@ const newsArticles = [
     id: 8,
     title: "Fan Culture.",
     subtitle: "The Heart of the Game.",
-    image: "/images/news/fans.png",
+    image: "/images/calltoaction.png",
     content:
       "Football is nothing without its fans. From the passionate chants echoing in stadiums to the vibrant displays of tifo and unwavering support through thick and thin, 'Fan Culture' is the lifeblood of the sport. This article explores the unique traditions, rivalries, and camaraderie that define supporter groups around the world. We celebrate the incredible energy and dedication of fans who travel miles, brave all weather, and create an atmosphere that truly makes football 'the beautiful game'.",
+  },
+  {
+    id: 9,
+    title: "Tactical Evolutions.",
+    subtitle: "The Modern Game.",
+    image: "/images/news/tactics.png",
+    content:
+      "From the high press to inverted full-backs, modern football tactics are more complex than ever. This analysis breaks down the key strategic trends shaping today's game. Learn how managers adapt their formations and philosophies to counter opponents, exploit weaknesses, and control the flow of the match. We explore the data-driven decisions and innovative coaching that lead to victory on the pitch.",
+  },
+  {
+    id: 10,
+    title: "VAR Controversy.",
+    subtitle: "Tech in Football.",
+    image: "/images/news/var.png",
+    content:
+      "Video Assistant Referee (VAR) was introduced to eliminate clear and obvious errors, but it remains one of the most debated topics in football. This feature examines the pros and cons of VAR, analyzing its impact on the pace of the game, the accuracy of decisions, and the emotional experience for players and fans alike. Is it a necessary tool for fairness or a disruptive force that undermines the referee's authority?",
   },
 ]
 
@@ -88,45 +104,58 @@ const News = () => {
   const containerRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selected, setSelected] = useState(null)
-
-  // Detect mobile so we only apply the optimizations on smaller screens
   const [isMobile, setIsMobile] = useState(false)
+
+  // Effect to detect if the screen is mobile-sized
   useEffect(() => {
-    if (typeof window === "undefined") return
     const mq = window.matchMedia("(max-width: 768px)")
-    const onChange = (e) => setIsMobile(e.matches)
-    setIsMobile(mq.matches)
-    if (mq.addEventListener) {
-      mq.addEventListener("change", onChange)
-      return () => mq.removeEventListener("change", onChange)
-    }
-    mq.addListener(onChange)
-    return () => mq.removeListener(onChange)
+    const handleResize = () => setIsMobile(mq.matches)
+    handleResize() // Set initial value
+    mq.addEventListener("change", handleResize)
+    return () => mq.removeEventListener("change", handleResize)
   }, [])
 
+  // ✅ OPTIMIZATION: Use IntersectionObserver instead of onScroll event
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const handleScroll = () => {
-      const scrollLeft = container.scrollLeft
-      const width = container.offsetWidth
-      const index = Math.round(scrollLeft / width)
-      setActiveIndex(index)
-    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // When a card is more than 70% visible, set it as active
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.dataset.index, 10)
+            setActiveIndex(index)
+          }
+        })
+      },
+      {
+        root: container, // The scroll container is the viewport
+        threshold: 0.7, // Trigger when 70% of the card is visible
+      }
+    )
 
-    container.addEventListener("scroll", handleScroll)
-    return () => container.removeEventListener("scroll", handleScroll)
-  }, [])
+    // Observe all the cards
+    const cards = container.querySelectorAll(".news-card")
+    cards.forEach((card) => observer.observe(card))
+
+    // Cleanup observer on component unmount
+    return () => cards.forEach((card) => observer.unobserve(card))
+  }, []) // Empty dependency array ensures this runs only once
 
   const scrollToIndex = (index) => {
     const container = containerRef.current
-    if (!container) return
-    const width = container.offsetWidth
-    container.scrollTo({
-      left: width * index,
-      behavior: "smooth",
-    })
+    if (container) {
+      const card = container.children[index]
+      if (card) {
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        })
+      }
+    }
   }
 
   return (
@@ -143,39 +172,36 @@ const News = () => {
       <div
         ref={containerRef}
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
-        style={{
-          scrollSnapType: "x mandatory",
-          willChange: "scroll-position",
-        }}
+        style={{ scrollSnapType: "x mandatory" }}
       >
         {newsArticles.map((article, index) => {
-          // Motion props for desktop (animations)
-          const desktopMotionProps = {
-            initial: { opacity: 0.5, scale: 0.9 },
-            whileInView: { opacity: 1, scale: 1 },
-            transition: { duration: 0.6, ease: "easeOut" },
-            viewport: { amount: 0.6, once: false },
-          }
-
-          // If mobile: just render with no animation
           const MotionWrapper = isMobile ? "div" : motion.div
-          const motionProps = isMobile ? {} : desktopMotionProps
+          const motionProps = isMobile
+            ? {}
+            : {
+                initial: { opacity: 0.5, scale: 0.9 },
+                whileInView: { opacity: 1, scale: 1 },
+                transition: { duration: 0.6, ease: "easeOut" },
+                viewport: { amount: 0.6, once: false },
+              }
 
           return (
             <MotionWrapper
               key={article.id}
+              data-index={index} // Add data-index for the observer
               {...motionProps}
               style={{
-                willChange: isMobile ? "auto" : "transform, opacity",
                 width: "90%",
                 maxWidth: "380px",
                 minHeight: "500px",
+                marginLeft: index === 0 ? "5%" : "0",
+                marginRight: "2.5%",
               }}
-              className={`relative rounded-3xl overflow-hidden flex-shrink-0 snap-center flex flex-col justify-between p-6 shadow-md ${bgShades[index % bgShades.length]} ${
-                index === 0 ? "ml-6" : ""
-              } ${index === newsArticles.length - 1 ? "mr-6" : "mr-5"}`}
+              // ✅ OPTIMIZATION: Added 'news-card' class for the observer to target
+              className={`news-card relative rounded-3xl overflow-hidden flex-shrink-0 snap-center flex flex-col justify-between p-6 shadow-md ${
+                bgShades[index % bgShades.length]
+              }`}
             >
-              {/* Title */}
               <div>
                 <h3 className="text-3xl font-semibold leading-snug">
                   {article.title}
@@ -185,17 +211,17 @@ const News = () => {
                 </p>
               </div>
 
-              {/* Image */}
               <div className="flex items-center justify-center flex-1 relative">
                 <img
                   src={article.image}
                   alt={article.title}
+                  // ✅ OPTIMIZATION: Lazy load images for better scroll performance
+                  loading="lazy"
+                  decoding="async"
                   className="h-full object-contain drop-shadow-xl"
-                  style={{ willChange: "auto" }}
                 />
               </div>
 
-              {/* Plus button */}
               <button
                 onClick={() => setSelected(article)}
                 className="absolute bottom-5 right-5 w-10 h-10 flex items-center justify-center rounded-full border-2 font-bold text-lg border-current hover:bg-current hover:text-white transition transform hover:scale-110"
@@ -216,6 +242,7 @@ const News = () => {
             className={`w-3 h-3 rounded-full transition ${
               activeIndex === idx ? "bg-black" : "bg-gray-400"
             }`}
+            aria-label={`Go to slide ${idx + 1}`}
           />
         ))}
       </div>
@@ -252,13 +279,16 @@ const News = () => {
                 <img
                   src={selected.image}
                   alt={selected.title}
+                  // ✅ OPTIMIZATION: Also lazy load the modal image
+                  loading="lazy"
+                  decoding="async"
                   className="w-full object-cover mb-8 rounded-lg shadow-md"
                 />
                 <p className="text-lg leading-relaxed text-gray-700">
                   {selected.content}
                 </p>
                 <div className="mt-10 pt-6 border-t border-gray-200 text-sm text-gray-500">
-                  Published: October 26, 2023
+                  Published: October 03, 2025
                 </div>
               </div>
             </motion.div>
