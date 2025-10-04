@@ -12,14 +12,16 @@ import News from "./pages/public/News"
 import Booking from "./pages/public/Booking"
 import FootballHero from "./pages/public/FootballHero"
 import TicketDetails from "./pages/public/TicketDetails"
+import VerifyTicket from "./pages/public/VerifyTicket"
 
 // Auth-related pages
 import Tickets from "./pages/public/Tickets"
 import Login from "./pages/public/Login"
 import Register from "./pages/public/Register"
 
-// Admin
+// Admin & Scanner
 import AdminLayout from "./pages/admin/AdminLayout"
+import TicketScanner from "./pages/TicketScanner"
 
 import "./styles/globals.css"
 
@@ -44,7 +46,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   if (requireAdmin && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-red-600">Access denied. Admin privileges required.</div>
+        <div className="text-lg text-red-600">
+          Access denied. Admin privileges required.
+        </div>
       </div>
     )
   }
@@ -74,7 +78,7 @@ const PublicRoute = ({ children }) => {
 }
 
 // -------------------
-// App
+// App Component
 // -------------------
 function App() {
   return (
@@ -89,11 +93,10 @@ function App() {
             <Route path="/news" element={<News />} />
             <Route path="/footballhero" element={<FootballHero />} />
             <Route path="/tickets/:ticketId" element={<TicketDetails />} />
-
-            {/* Booking (accessible even without login) */}
+            <Route path="/verify-ticket" element={<VerifyTicket />} />
             <Route path="/booking/:matchId" element={<Booking />} />
 
-            {/* Public-only routes (redirect if logged in) */}
+            {/* Auth routes */}
             <Route
               path="/login"
               element={
@@ -111,7 +114,7 @@ function App() {
               }
             />
 
-            {/* Protected user-only routes */}
+            {/* User protected routes */}
             <Route
               path="/my-tickets"
               element={
@@ -127,6 +130,16 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminLayout />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ✅ Ticket Scanner - protected route */}
+            <Route
+              path="/ticket-scanner"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <TicketScanner />
                 </ProtectedRoute>
               }
             />

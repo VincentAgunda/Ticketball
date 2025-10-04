@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import React, { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -11,6 +10,7 @@ import {
   ExitToApp,
   Dashboard,
   Login,
+  QrCodeScanner,
 } from "@mui/icons-material"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -53,20 +53,15 @@ const Header = () => {
     }
   }
 
-  // ✅ Smooth scroll to News section
   const scrollToNews = () => {
     if (location.pathname === "/") {
       const newsSection = document.getElementById("news-section")
-      if (newsSection) {
-        newsSection.scrollIntoView({ behavior: "smooth" })
-      }
+      if (newsSection) newsSection.scrollIntoView({ behavior: "smooth" })
     } else {
       navigate("/")
       setTimeout(() => {
         const newsSection = document.getElementById("news-section")
-        if (newsSection) {
-          newsSection.scrollIntoView({ behavior: "smooth" })
-        }
+        if (newsSection) newsSection.scrollIntoView({ behavior: "smooth" })
       }, 500)
     }
     setMobileMenuOpen(false)
@@ -98,7 +93,7 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center space-x-6">
             {navigation.map((item) => (
               <Link
@@ -113,17 +108,25 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
-
-            {/* ✅ News link */}
             <button
               onClick={scrollToNews}
               className="text-sm font-medium px-2 py-1 rounded-md text-gray-700 hover:text-black transition-colors"
             >
               News
             </button>
+            {/* ✅ Admin-only Scanner Button */}
+            {isAdmin && (
+              <Link
+                to="/ticket-scanner"
+                className="flex items-center px-3 py-1 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700 transition-colors"
+              >
+                <QrCodeScanner className="h-4 w-4 mr-1" />
+                Scan Ticket
+              </Link>
+            )}
           </nav>
 
-          {/* User / Auth Section */}
+          {/* User Controls */}
           <div className="hidden md:flex items-center space-x-4 user-menu-container">
             {user ? (
               <div className="relative">
@@ -142,7 +145,6 @@ const Header = () => {
                   )}
                 </button>
 
-                {/* User Dropdown */}
                 <AnimatePresence>
                   {userMenuOpen && (
                     <motion.div
@@ -165,14 +167,24 @@ const Header = () => {
                       </div>
 
                       {isAdmin && (
-                        <Link
-                          to="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <Dashboard className="inline h-4 w-4 mr-2" />
-                          Admin Dashboard
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <Dashboard className="inline h-4 w-4 mr-2" />
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            to="/ticket-scanner"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <QrCodeScanner className="inline h-4 w-4 mr-2" />
+                            Ticket Scanner
+                          </Link>
+                        </>
                       )}
 
                       <Link
@@ -206,7 +218,7 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile toggle */}
+          {/* Mobile Toggle */}
           <button
             className="md:hidden p-2 text-gray-700"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -216,11 +228,10 @@ const Header = () => {
         </div>
       </div>
 
-      {/* --- MOBILE MENU & OVERLAY --- */}
+      {/* ✅ Mobile Drawer */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -230,7 +241,6 @@ const Header = () => {
               onClick={() => setMobileMenuOpen(false)}
             />
 
-            {/* Drawer */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -239,9 +249,7 @@ const Header = () => {
               className="fixed inset-y-0 right-0 w-72 bg-white shadow-xl z-50 border-l border-gray-200 flex flex-col"
             >
               <div className="flex justify-between items-center p-4 border-b border-gray-200">
-                <span className="text-lg font-semibold text-gray-900">
-                  Menu
-                </span>
+                <span className="text-lg font-semibold text-gray-900">Menu</span>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-2 text-gray-700 hover:bg-gray-100 rounded-full"
@@ -265,13 +273,24 @@ const Header = () => {
                   </Link>
                 ))}
 
-                {/* ✅ News in Mobile */}
                 <button
                   onClick={scrollToNews}
                   className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
                 >
                   News
                 </button>
+
+                {/* ✅ Admin scanner link on mobile */}
+                {isAdmin && (
+                  <Link
+                    to="/ticket-scanner"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-800 hover:bg-gray-700"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <QrCodeScanner className="inline h-5 w-5 mr-2" />
+                    Ticket Scanner
+                  </Link>
+                )}
 
                 <div className="border-t border-gray-200 pt-3">
                   {user ? (
@@ -291,6 +310,7 @@ const Header = () => {
                           </div>
                         </div>
                       </div>
+
                       {isAdmin && (
                         <Link
                           to="/admin"
@@ -301,6 +321,7 @@ const Header = () => {
                           Admin Dashboard
                         </Link>
                       )}
+
                       <Link
                         to="/my-tickets"
                         className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
@@ -309,6 +330,7 @@ const Header = () => {
                         <SportsSoccer className="inline h-5 w-5 mr-2" />
                         My Tickets
                       </Link>
+
                       <button
                         onClick={handleSignOut}
                         className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-gray-50"

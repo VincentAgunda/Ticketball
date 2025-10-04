@@ -1,4 +1,3 @@
-// src/pages/public/TicketDetails.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { db } from "../../lib/firebase";
@@ -10,6 +9,8 @@ import {
   LocationOn,
   EventSeat,
   ConfirmationNumber,
+  Print,
+  ArrowBack,
 } from "@mui/icons-material";
 import { formatDate, formatCurrency } from "../../utils/helpers";
 import { getTeamLogo } from "../../utils/constants";
@@ -37,8 +38,6 @@ const TicketDetails = () => {
         }
 
         const ticketData = ticketSnap.data();
-
-        // ✅ Guest link validation
         if (ticketData.guest) {
           if (!guestSecret || guestSecret !== ticketData.guest_secret) {
             setError("Invalid or unauthorized guest link.");
@@ -48,12 +47,9 @@ const TicketDetails = () => {
         }
 
         setTicket({ id: ticketSnap.id, ...ticketData });
-
-        // ✅ Fetch match details if available
         if (ticketData.match_id) {
           const matchRef = doc(db, "matches", ticketData.match_id);
           const matchSnap = await getDoc(matchRef);
-
           if (matchSnap.exists()) {
             setMatch({ id: matchSnap.id, ...matchSnap.data() });
           }
@@ -73,13 +69,14 @@ const TicketDetails = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white px-6 text-center">
-        <h1 className="text-2xl font-semibold mb-2">Error</h1>
-        <p className="text-gray-400">{error}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F5F7] text-[#004700] px-6 text-center">
+        <h1 className="text-2xl font-semibold mb-2 text-[#00008B]">Error</h1>
+        <p>{error}</p>
         <Link
           to="/"
-          className="mt-6 inline-block px-6 py-3 rounded-xl bg-yellow-500 text-black font-semibold hover:bg-yellow-400 transition-all"
+          className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#00008B] text-white font-semibold hover:bg-[#004700] transition-all"
         >
+          <ArrowBack className="!text-white" />
           Back to Homepage
         </Link>
       </div>
@@ -88,13 +85,12 @@ const TicketDetails = () => {
 
   if (!ticket) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-400">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7] text-[#004700]">
         Ticket not found.
       </div>
     );
   }
 
-  // ✅ Merge data
   const combinedMatch = match || {
     home_team: ticket.home_team || "Unknown Team",
     away_team: ticket.away_team || "Unknown Team",
@@ -117,83 +113,126 @@ const TicketDetails = () => {
       ? formatCurrency(Number(ticket.amount))
       : "KES 0";
 
+  const printTicketOnly = () => {
+    const ticketEl = document.getElementById("ticket-section");
+    if (!ticketEl) return window.print();
+
+    const styles = Array.from(document.querySelectorAll("link, style"))
+      .map((s) => s.outerHTML)
+      .join("\n");
+
+    const newWin = window.open("", "_blank");
+    newWin.document.write(`
+      <html>
+        <head>
+          <title>Print Ticket</title>
+          ${styles}
+          <style>
+            body { background: white; -webkit-print-color-adjust: exact; margin: 0; }
+            #ticket-section { box-shadow: none; border: none; width: 260px; padding: 8px; margin: 0 auto; background: white; }
+            @page { margin: 8mm; }
+          </style>
+        </head>
+        <body>${ticketEl.outerHTML}</body>
+      </html>
+    `);
+    newWin.document.close();
+    newWin.focus();
+    setTimeout(() => {
+      newWin.print();
+      newWin.close();
+    }, 400);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white flex flex-col items-center py-14 px-6">
-      <div className="max-w-md w-full bg-gray-900/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 text-center border border-gray-700">
-        <h1 className="text-3xl font-extrabold tracking-tight mb-8">
-          🎟 Ticket Details
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center py-10 px-4 print:bg-white">
+      <div
+        className="max-w-md w-full bg-[#F5F5F7] rounded-2xl shadow-lg p-6 border border-[#00008B]/20"
+        id="ticket-section"
+      >
+        <h1 className="text-2xl font-bold text-[#00008B] text-center mb-5">
+          Ticket Details
         </h1>
 
         {/* Teams */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-300 shadow-md">
-              <img
-                src={getTeamLogo(combinedMatch.home_team)}
-                alt={combinedMatch.home_team}
-                className="w-full h-full object-cover"
-              />
+        <div className="flex justify-between items-center mb-6 relative">
+          {[combinedMatch.home_team, combinedMatch.away_team].map((team, idx) => (
+            <div key={team + idx} className="flex flex-col items-center">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#00008B] shadow-md">
+                <img
+                  src={getTeamLogo(team)}
+                  alt={team}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className="mt-2 font-medium text-sm text-[#004700] text-center">
+                {team}
+              </p>
             </div>
-            <p className="mt-2 text-white font-semibold text-sm">
-              {combinedMatch.home_team}
-            </p>
-          </div>
-
-          <p className="text-gray-400 font-semibold text-lg">vs</p>
-
-          <div className="flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-300 shadow-md">
-              <img
-                src={getTeamLogo(combinedMatch.away_team)}
-                alt={combinedMatch.away_team}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 text-white font-semibold text-sm">
-              {combinedMatch.away_team}
-            </p>
-          </div>
+          ))}
+          <p className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-[#00008B]">
+            VS
+          </p>
         </div>
 
         {/* QR */}
-        <div className="flex justify-center my-6">
-          <TicketQR ticket={ticket} size={180} />
+        <div className="flex justify-center my-4 bg-[#004700] p-3 rounded-xl shadow-inner">
+          <TicketQR ticket={ticket} size={110} compact />
         </div>
 
-        {/* Ticket info */}
-        <div className="space-y-3 text-left text-sm">
-          <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-            <CalendarToday className="h-5 w-5 text-yellow-400" />
-            <p>{formattedDate}</p>
-          </div>
-          <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-            <LocationOn className="h-5 w-5 text-yellow-400" />
-            <p>{combinedMatch.venue}</p>
-          </div>
-          <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-            <EventSeat className="h-5 w-5 text-yellow-400" />
-            <p>{seatLabel}</p>
-          </div>
-          <div className="flex items-center space-x-3 p-2 bg-black/30 rounded">
-            <ConfirmationNumber className="h-5 w-5 text-yellow-400" />
-            <p>{amountValue}</p>
-          </div>
+        {/* Info List */}
+        <div className="divide-y divide-[#00008B]/10 mt-5 bg-white rounded-xl shadow-sm overflow-hidden">
+          {[
+            { icon: <CalendarToday />, label: formattedDate },
+            { icon: <LocationOn />, label: combinedMatch.venue },
+            { icon: <EventSeat />, label: seatLabel },
+            { icon: <ConfirmationNumber />, label: amountValue },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-[#F5F5F7] transition-colors"
+            >
+              <span className="text-[#00008B] text-sm">{item.icon}</span>
+              <p className="text-[#004700] text-sm">{item.label}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Download */}
-        <div className="mt-8">
-          <a
-            href={`/download/${ticket.id}`}
-            className="inline-flex items-center justify-center px-6 py-3 bg-yellow-500 text-black font-semibold rounded-full shadow-lg hover:bg-yellow-400 transition-all"
+        {/* Print */}
+        <div className="mt-6 text-center print:hidden">
+          <button
+            onClick={printTicketOnly}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#00008B] text-white text-sm font-semibold rounded-full shadow-md hover:bg-[#004700] transition-all"
           >
-            Download Ticket
-          </a>
+            <Print fontSize="small" />
+            Print Ticket
+          </button>
         </div>
 
-        <p className="text-xs text-gray-500 mt-6">
+        <p className="text-xs text-[#004700] mt-4 text-center">
           Ticket ID: {ticket.id.slice(0, 10).toUpperCase()}
         </p>
       </div>
+
+      {/* Print Styles */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #ticket-section, #ticket-section * { visibility: visible !important; }
+          #ticket-section {
+            position: absolute !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            top: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            width: 260px !important;
+            padding: 8px !important;
+            background: white !important;
+          }
+          button, .print\\:hidden { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };

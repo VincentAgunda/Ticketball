@@ -1,6 +1,8 @@
 import { APP_CONFIG } from './constants'
 
-// ✅ Format currency for Kenya Shillings
+/* -------------------------------------------------------------------------- */
+/* ✅ Format currency for Kenya Shillings */
+/* -------------------------------------------------------------------------- */
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-KE', {
     style: 'currency',
@@ -8,7 +10,9 @@ export const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// ✅ Robust Date Formatter (handles Firestore Timestamps, ISO strings, and numbers)
+/* -------------------------------------------------------------------------- */
+/* ✅ Robust Date Formatter (handles Firestore Timestamps, ISO strings, and numbers) */
+/* -------------------------------------------------------------------------- */
 export const formatDate = (dateInput, options = {}) => {
   if (!dateInput) return 'Invalid Date'
 
@@ -18,17 +22,17 @@ export const formatDate = (dateInput, options = {}) => {
     // Firestore Timestamp object
     if (typeof dateInput === 'object' && dateInput.seconds) {
       date = new Date(dateInput.seconds * 1000)
-    } 
+    }
     // JS Date object
     else if (dateInput instanceof Date) {
       date = dateInput
-    } 
+    }
     // UNIX timestamp (ms or s)
     else if (typeof dateInput === 'number') {
       date = new Date(
         dateInput.toString().length === 10 ? dateInput * 1000 : dateInput
       )
-    } 
+    }
     // String (ISO or other)
     else {
       date = new Date(dateInput)
@@ -51,7 +55,9 @@ export const formatDate = (dateInput, options = {}) => {
   return new Intl.DateTimeFormat('en-KE', { ...defaultOptions, ...options }).format(date)
 }
 
-// ✅ Generate seat map data
+/* -------------------------------------------------------------------------- */
+/* ✅ Generate seat map data */
+/* -------------------------------------------------------------------------- */
 export const generateSeatMap = (totalSeats, bookedSeats = []) => {
   const { rows, seatsPerRow, vipRows, premiumRows } = APP_CONFIG.stadium
   const seats = []
@@ -60,7 +66,7 @@ export const generateSeatMap = (totalSeats, bookedSeats = []) => {
     for (let seat = 1; seat <= seatsPerRow; seat++) {
       const seatNumber = `${String.fromCharCode(64 + row)}${seat}`
       let type = 'standard'
-      
+
       if (vipRows.includes(row)) type = 'vip'
       if (premiumRows.includes(row)) type = 'premium'
 
@@ -81,7 +87,9 @@ export const generateSeatMap = (totalSeats, bookedSeats = []) => {
   return seats
 }
 
-// ✅ Updated ticket price calculation (with fixed multipliers)
+/* -------------------------------------------------------------------------- */
+/* ✅ Updated ticket price calculation (with fixed multipliers) */
+/* -------------------------------------------------------------------------- */
 export const calculateTicketPrice = (basePrice, seatType) => {
   const multipliers = {
     'standard': 1,
@@ -91,7 +99,9 @@ export const calculateTicketPrice = (basePrice, seatType) => {
   return Math.round(basePrice * (multipliers[seatType?.toLowerCase()] || 1))
 }
 
-// ✅ Generate QR code data for tickets
+/* -------------------------------------------------------------------------- */
+/* ✅ Generate QR code data for tickets */
+/* -------------------------------------------------------------------------- */
 export const generateQRData = (ticketId, matchId, seatNumber) => {
   return JSON.stringify({
     ticketId,
@@ -101,13 +111,59 @@ export const generateQRData = (ticketId, matchId, seatNumber) => {
   })
 }
 
-// ✅ Updated phone validation (Kenyan numbers: 07x..., 011..., or 254 versions)
+/* -------------------------------------------------------------------------- */
+/* ✅ QR validation and deactivation system */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Validate a scanned QR code
+ * @param {string} qrString - QR code string (JSON)
+ * @returns {object} { valid: boolean, message: string, data?: object }
+ */
+export const validateAndDeactivateQR = (qrString) => {
+  try {
+    const data = JSON.parse(qrString)
+    if (!data.ticketId || !data.matchId || !data.seatNumber) {
+      return { valid: false, message: 'Invalid QR data format' }
+    }
+
+    // Retrieve previously used QR codes
+    const usedQRCodes = JSON.parse(localStorage.getItem('usedQRCodes') || '[]')
+
+    // Check if already used
+    if (usedQRCodes.includes(data.ticketId)) {
+      return { valid: false, message: 'This ticket has already been used.' }
+    }
+
+    // Mark QR code as used
+    usedQRCodes.push(data.ticketId)
+    localStorage.setItem('usedQRCodes', JSON.stringify(usedQRCodes))
+
+    return { valid: true, message: 'Ticket validated successfully.', data }
+  } catch (error) {
+    console.error('QR validation error:', error)
+    return { valid: false, message: 'Invalid or unreadable QR code.' }
+  }
+}
+
+/**
+ * Reactivate (reset) all used QR codes — e.g., for testing or admin reset
+ */
+export const resetUsedQRCodes = () => {
+  localStorage.removeItem('usedQRCodes')
+}
+
+/* -------------------------------------------------------------------------- */
+/* ✅ Updated phone validation (Kenyan numbers: 07x..., 011..., or 254 versions) */
+/* -------------------------------------------------------------------------- */
 export const validatePhoneNumber = (phone) => {
   const phoneRegex = /^(07\d{8}|011\d{7}|2547\d{8}|25411\d{7})$/
   return phoneRegex.test(phone.replace(/\s/g, ''))
 }
 
-// ✅ Updated phone formatter (always return 254XXXXXXXXX)
+/* -------------------------------------------------------------------------- */
+/* ✅ Updated phone formatter (always return 254XXXXXXXXX) */
+/* -------------------------------------------------------------------------- */
 export const formatPhoneNumber = (phone) => {
   const cleaned = phone.replace(/\D/g, '')
   if (cleaned.startsWith('0')) {
@@ -119,7 +175,9 @@ export const formatPhoneNumber = (phone) => {
   }
 }
 
-// ✅ Debounce function for search inputs
+/* -------------------------------------------------------------------------- */
+/* ✅ Debounce function for search inputs */
+/* -------------------------------------------------------------------------- */
 export const debounce = (func, wait) => {
   let timeout
   return function executedFunction(...args) {
@@ -132,13 +190,17 @@ export const debounce = (func, wait) => {
   }
 }
 
-// ✅ Check if user is admin (simple email-based check)
+/* -------------------------------------------------------------------------- */
+/* ✅ Check if user is admin (simple email-based check) */
+/* -------------------------------------------------------------------------- */
 export const isAdminUser = (email) => {
   const adminDomains = ['@admin.com', '@footballtickets.com']
   return adminDomains.some(domain => email?.endsWith(domain))
 }
 
-// ✅ Local storage helpers
+/* -------------------------------------------------------------------------- */
+/* ✅ Local storage helpers */
+/* -------------------------------------------------------------------------- */
 export const storage = {
   get: (key) => {
     try {

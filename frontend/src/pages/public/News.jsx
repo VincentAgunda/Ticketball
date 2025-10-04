@@ -82,7 +82,7 @@ const newsArticles = [
     content:
       "Football is nothing without its fans. From the passionate chants echoing in stadiums to the vibrant displays of tifo and unwavering support through thick and thin, 'Fan Culture' is the lifeblood of the sport. This article explores the unique traditions, rivalries, and camaraderie that define supporter groups around the world. We celebrate the incredible energy and dedication of fans who travel miles, brave all weather, and create an atmosphere that truly makes football 'the beautiful game'.",
   },
-
+   
 ]
 
 const News = () => {
