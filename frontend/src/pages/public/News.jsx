@@ -30,7 +30,7 @@ const newsArticles = [
     id: 2,
     title: "Rising Stars.",
     subtitle: "Young Players to Watch.",
-    image: "/images/vin3.png",
+    image: "/images/calltoaction.png",
     content:
       "Football is constantly evolving, and a new generation of talent is emerging, ready to take the world by storm. From electrifying wingers to composed defenders, these young players are making a significant impact in their respective leagues. Keep an eye on the likes of wonderkid 'Phenom Jr.' known for his dazzling dribbling, and the midfield maestro 'Architect' who dictates play with his incredible vision. Their potential is limitless, and they are set to redefine the future of the beautiful game.",
   },
@@ -38,7 +38,7 @@ const newsArticles = [
     id: 3,
     title: "Behind the Scenes.",
     subtitle: "Match Day Moments.",
-    image: "/images/vin3.png",
+    image: "/images/calltoaction.png",
     content:
       "Ever wondered what goes on before, during, and after a major football match? Our exclusive 'Behind the Scenes' look reveals the meticulous preparations, the intense locker room speeches, and the raw emotions that unfold on match day. From the ground staff ensuring a perfect pitch to the coaches fine-tuning their strategies, every detail contributes to the spectacle. Experience the adrenaline of the tunnel walk, the roar of the crowd, and the celebrations (or commiserations) after the final whistle.",
   },
@@ -70,7 +70,7 @@ const newsArticles = [
     id: 7,
     title: "Training Insights.",
     subtitle: "Secrets from Pros.",
-    image: "/images/news/training.png",
+    image: "/images/calltoaction.png",
     content:
       "Ever wondered how professional footballers maintain peak performance? Our 'Training Insights' segment uncovers the rigorous routines, specialized drills, and dietary secrets that keep elite athletes at the top of their game. From high-intensity interval training to recovery protocols and mental conditioning, every aspect is meticulously planned. Learn directly from top pros and their coaches about the dedication required to excel, and gain tips you can apply to your own fitness journey.",
   },
@@ -78,7 +78,7 @@ const newsArticles = [
     id: 8,
     title: "Fan Culture.",
     subtitle: "The Heart of the Game.",
-    image: "/images/news/fans.png",
+    image: "/images/calltoaction.png",
     content:
       "Football is nothing without its fans. From the passionate chants echoing in stadiums to the vibrant displays of tifo and unwavering support through thick and thin, 'Fan Culture' is the lifeblood of the sport. This article explores the unique traditions, rivalries, and camaraderie that define supporter groups around the world. We celebrate the incredible energy and dedication of fans who travel miles, brave all weather, and create an atmosphere that truly makes football 'the beautiful game'.",
   },
