@@ -1,4 +1,4 @@
- // and add two more cards // src/pages/public/News.jsx
+// and add two more cards // src/pages/public/News.jsx
 import React, { useRef, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, X } from "lucide-react"
@@ -82,30 +82,7 @@ const newsArticles = [
     content:
       "Football is nothing without its fans. From the passionate chants echoing in stadiums to the vibrant displays of tifo and unwavering support through thick and thin, 'Fan Culture' is the lifeblood of the sport. This article explores the unique traditions, rivalries, and camaraderie that define supporter groups around the world. We celebrate the incredible energy and dedication of fans who travel miles, brave all weather, and create an atmosphere that truly makes football 'the beautiful game'.",
   },
-{
-    id: 9,
-    title: "Next Gen Coaches.",
-    subtitle: "Changing Football.",
-    image: "/images/vin3.png",
-    content:
-      "A new breed of tacticians is emerging, bringing fresh ideas and innovative approaches to football management. These 'Next Gen Coaches' are challenging traditional methodologies, focusing on data analytics, psychological conditioning, and fluid systems. Discover how their forward-thinking philosophies are revolutionizing training sessions, match strategies, and player development. They are not just winning games; they are changing the very fabric of how football is played and perceived.",
-  },
-{
-    id: 10,
-    title: "Tactical Evolutions.",
-    subtitle: "The Modern Game.",
-    image: "/images/news/tactics.png",
-    content:
-      "From the high press to inverted full-backs, modern football tactics are more complex than ever. This analysis breaks down the key strategic trends shaping today's game. Learn how managers adapt their formations and philosophies to counter opponents, exploit weaknesses, and control the flow of the match. We explore the data-driven decisions and innovative coaching that lead to victory on the pitch.",
-  },
-  {
-    id: 11,
-    title: "VAR Controversy.",
-    subtitle: "Tech in Football.",
-    image: "/images/news/var.png",
-    content:
-      "Video Assistant Referee (VAR) was introduced to eliminate clear and obvious errors, but it remains one of the most debated topics in football. This feature examines the pros and cons of VAR, analyzing its impact on the pace of the game, the accuracy of decisions, and the emotional experience for players and fans alike. Is it a necessary tool for fairness or a disruptive force that undermines the referee's authority?",
-  },
+
 ]
 
 const News = () => {

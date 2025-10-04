@@ -176,27 +176,27 @@ const Booking = () => {
   const sendConfirmationSMS = useCallback(async (tickets, matchData) => {
     try {
       for (const ticket of tickets) {
-        if (!ticket.user_phone) continue;
-        const ticketWithMatch = { ...ticket, match: matchData };
+        // ensure we have a phone number on the ticket
+        if (!ticket.user_phone && !ticket.user_phone_number && !phoneNumber) continue;
 
-        // Compose guest view URL if guest_secret present
         const guestLink = ticket.guest_secret
           ? `${window.location.origin}/tickets/${ticket.id}?guest_secret=${encodeURIComponent(ticket.guest_secret)}`
           : `${window.location.origin}/tickets/${ticket.id}`;
 
         try {
-          // ✅ Updated to work for both authenticated and guest users
-          const message = `Your ticket (${ticket.id?.slice(0,8).toUpperCase()}) for ${matchData.home_team} vs ${matchData.away_team} is confirmed.
-Seat: ${ticket.seat_number || 'TBA'}.
-View: ${guestLink}`;
+          // Compose message with direct download/view URL
+          const message = matchData
+            ? `Your ticket (${ticket.id?.slice(0,8).toUpperCase()}) for ${matchData.home_team} vs ${matchData.away_team} is confirmed.\nSeat: ${ticket.seat_number || 'TBA'}.\nDownload/View ticket: ${guestLink}\nThank you for booking with FootballTickets.`
+            : `Your ticket (${ticket.id?.slice(0,8).toUpperCase()}) is confirmed.\nDownload/View ticket: ${guestLink}\nThank you for booking with FootballTickets.`;
 
-          // ✅ Send minimal data needed - the endpoint now handles guests
+          // Send message to server SMS endpoint; server may accept `message` as payload and use it
           const result = await smsService.sendTicketSMS({
-            ticket: ticketWithMatch,
+            ticket,
             user: {
               id: user?.uid || 'guest',
               email: user?.email || 'guest',
-            }
+            },
+            message, // <-- include explicit message with download URL
           });
 
           if (result && result.success) {
@@ -206,20 +206,21 @@ View: ${guestLink}`;
               updated_at: new Date().toISOString(),
             });
           } else {
-            console.warn('SMS sending returned false:', result);
+            console.warn('SMS sending returned false or no success flag:', result);
           }
         } catch (err) {
           console.error('SMS error:', err);
-          // ✅ Don't throw error - just log it and continue
+          // Don't throw — continue with others
         }
+
         // small delay to avoid rate limits
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } catch (err) {
       console.error('Error in SMS sending process:', err);
-      // ✅ Don't throw error - SMS failure shouldn't block booking
+      // Don't block booking on SMS failure
     }
-  }, [user, updateTicket]);
+  }, [user, updateTicket, phoneNumber]);
 
   const handlePayment = useCallback(async () => {
     if (!validatePhoneNumber(phoneNumber)) {
@@ -246,7 +247,8 @@ View: ${guestLink}`;
       const mpesaResp = await mpesaService.initiatePayment({
         phoneNumber: formatPhoneNumber(phoneNumber),
         amount: totalAmount,
-        accountReference: `TICKET_${tickets.map(t => t.id).join('_')}`,
+        // ✅ IMPORTANT: include matchId so backend can split into [matchId, ticket1, ticket2...]
+        accountReference: `${matchId}_${tickets.map(t => t.id).join('_')}`,
         transactionDesc: `Tickets for ${match.home_team} vs ${match.away_team}`,
       });
 
@@ -292,7 +294,7 @@ View: ${guestLink}`;
         });
       }
 
-      // send SMS confirmations with guest link
+      // send SMS confirmations with guest link (message includes download URL)
       await sendConfirmationSMS(tickets, match);
 
       // refresh user tickets (for logged in users)

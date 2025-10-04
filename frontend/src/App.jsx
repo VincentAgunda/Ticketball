@@ -11,6 +11,7 @@ import Matches from "./pages/public/Matches"
 import News from "./pages/public/News"
 import Booking from "./pages/public/Booking"
 import FootballHero from "./pages/public/FootballHero"
+import TicketDetails from "./pages/public/TicketDetails"
 
 // Auth-related pages
 import Tickets from "./pages/public/Tickets"
@@ -87,6 +88,7 @@ function App() {
             <Route path="/matches" element={<Matches />} />
             <Route path="/news" element={<News />} />
             <Route path="/footballhero" element={<FootballHero />} />
+            <Route path="/tickets/:ticketId" element={<TicketDetails />} />
 
             {/* Booking (accessible even without login) */}
             <Route path="/booking/:matchId" element={<Booking />} />

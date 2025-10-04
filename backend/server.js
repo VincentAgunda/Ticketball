@@ -4,6 +4,7 @@ const cors = require('cors');
 const mpesaRoutes = require('./routes/mpesa');
 const smsRoutes = require('./routes/sms');
 
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -33,6 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ API Routes
 app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/sms', smsRoutes);
+
 
 // ✅ Health check route
 app.get('/api/health', (req, res) => {
