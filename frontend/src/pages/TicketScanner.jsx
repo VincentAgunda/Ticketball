@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
-import QrScanner from "react-qr-scanner"
+import QrScanner from "qr-scanner"
 import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore"
 import { db } from "../lib/firebase"
 import { motion, AnimatePresence } from "framer-motion"
@@ -35,6 +35,8 @@ const TicketScanner = () => {
   const [ticketData, setTicketData] = useState(null)
   const [liveStatus, setLiveStatus] = useState(null)
   const [cameraReady, setCameraReady] = useState(false)
+  const videoRef = useRef(null)
+  const scannerRef = useRef(null)
   const hasScanned = useRef(false)
 
   /* -------------------------------------------------------------------------- */
@@ -61,7 +63,7 @@ const TicketScanner = () => {
       setError(null)
 
       try {
-        const parsed = parseQRData(data.text || data)
+        const parsed = parseQRData(data)
         if (!parsed?.ticketId) {
           setError("❌ Invalid QR code format")
           setLoading(false)
@@ -118,22 +120,32 @@ const TicketScanner = () => {
     [loading, resetScanner]
   )
 
-  const handleError = (err) => {
-    console.error("QR Reader Error:", err)
-    setError("⚠️ Camera access denied or unavailable")
-  }
-
   /* -------------------------------------------------------------------------- */
-  /* 📸 Camera Access Check                                                    */
+  /* 📸 Initialize QR Scanner                                                  */
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then(() => setCameraReady(true))
-      .catch(() =>
-        setError("⚠️ Camera access is required for ticket scanning.")
-      )
-  }, [])
+    const videoElem = videoRef.current
+    if (!videoElem) return
+
+    const initScanner = async () => {
+      try {
+        const scanner = new QrScanner(
+          videoElem,
+          (result) => handleScan(result?.data),
+          { preferredCamera: "environment" }
+        )
+        scannerRef.current = scanner
+        await scanner.start()
+        setCameraReady(true)
+      } catch (err) {
+        console.error("Camera Error:", err)
+        setError("⚠️ Camera access denied or unavailable")
+      }
+    }
+
+    initScanner()
+    return () => scannerRef.current?.stop()
+  }, [handleScan])
 
   /* -------------------------------------------------------------------------- */
   /* 🖼️ UI Layout                                                             */
@@ -148,12 +160,11 @@ const TicketScanner = () => {
       {/* QR Scanner */}
       {cameraReady ? (
         <div className="w-full max-w-sm bg-white/10 rounded-xl overflow-hidden shadow-lg border border-white/20">
-          <QrScanner
-            delay={500}
-            onError={handleError}
-            onScan={handleScan}
-            style={{ width: "100%", height: 320 }}
-            constraints={{ facingMode: "environment" }}
+          <video
+            ref={videoRef}
+            className="w-full h-80 object-cover rounded-xl"
+            muted
+            playsInline
           />
         </div>
       ) : (
