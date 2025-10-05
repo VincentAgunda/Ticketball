@@ -1,3 +1,4 @@
+// controllers/mpesaController.js
 const axios = require("axios");
 const { db } = require("../config/firebase");
 const {
@@ -257,7 +258,7 @@ async function updateMatchSeats(matchId, seatsToReduce) {
 }
 
 /**
- * ✅ Compose and send confirmation SMS (full ticket URLs)
+ * ✅ Compose and send structured confirmation SMS (fixed: URL always single line)
  */
 async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, userId) {
   try {
@@ -274,42 +275,73 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
       .where("__name__", "in", ticketIds)
       .get();
 
+    // Ensure baseUrl is trimmed and has no trailing slash
     const baseUrl = (process.env.FRONTEND_URL || "https://ticketmasters.vercel.app")
       .trim()
       .replace(/\/$/, "");
 
-    const ticketEntries = ticketsSnapshot.docs.map((d) => {
-      const data = d.data();
-      return {
-        id: d.id,
-        seat_number: data.seat_number || "Unassigned",
-        seat_type: data.seat_type || data.type || "standard",
-        guest_secret: data.guest_secret || null,
-        amount: Number(data.amount || amount || 0),
-      };
-    });
+    for (const doc of ticketsSnapshot.docs) {
+      const t = doc.data();
+      const ticketId = doc.id;
 
-    const ticketLines = ticketEntries
-      .map((t) => {
-        const url = `${baseUrl}/tickets/${t.id}${t.guest_secret ? `?guest_secret=${t.guest_secret}` : ""}`;
-        return `🎟 ${t.seat_type.toUpperCase()} • ${t.seat_number} • KES ${t.amount}\n👉 ${url}`;
-      })
-      .join("\n\n");
+      const matchName = match
+        ? `${match.home_team || ""} vs ${match.away_team || ""}`.trim() || "Football Match"
+        : "Football Match";
 
-    const header = match
-      ? `Your booking for ${match.home_team} vs ${match.away_team} is confirmed!\n`
-      : `Your football ticket purchase is confirmed!\n`;
+      const date = match?.match_date
+        ? new Date(match.match_date).toLocaleString("en-KE", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "To be announced";
 
-    const message = `${header}${ticketLines}\n\nThank you for choosing FootballTickets!`.trim();
+      const seatType = (t.seat_type || t.type || "Standard").trim();
+      const seatNumber = t.seat_number || "STANDARD1";
+      const ticketPrice = Math.round(Number(t.amount || amount || 0) * 100) / 100;
+      const guestSecret = t.guest_secret ? `?guest_secret=${t.guest_secret}` : "";
 
-    console.log("📲 Confirmation SMS would be sent to:", phoneNumber);
-    console.log("Message:\n" + message);
+      // Build URL and remove any accidental whitespace/newlines inside it
+      let ticketUrl = `${baseUrl}/tickets/${ticketId}${guestSecret}`;
+      ticketUrl = ticketUrl.replace(/(\r\n|\n|\r|\s)+/g, "");
 
-    // To actually send via SMS API:
-    // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', {
-    //   phoneNumber,
-    //   message,
-    // });
+      const lines = [
+        "FOOTBALL TICKET CONFIRMED",
+        "",
+        `Match: ${matchName}`,
+        `Date: ${date}`,
+        `Venue: ${match?.venue || "Stadium"}`,
+        `Seat: ${seatNumber}`,
+        `Type: ${seatType}`,
+        `Price: KES ${ticketPrice}`,
+        `Ticket ID: ${ticketId}`,
+        "",
+        `View your ticket: ${ticketUrl}`, // <-- full URL on same line
+        "",
+        "IMPORTANT:",
+        "• Present QR code at entrance",
+        "• Arrive 1 hour before match",
+        "• Valid only for specified seat",
+        "",
+        "Need help? Call +254 700 123 456",
+        "",
+        "Thank you for choosing FootballTickets!",
+      ];
+
+      const message = lines.join("\n");
+
+      console.log("📲 Confirmation SMS would be sent to:", phoneNumber);
+      console.log("Message:\n" + message);
+
+      // Actual SMS send (uncomment / replace with your provider call)
+      // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', {
+      //   phoneNumber,
+      //   message,
+      // });
+    }
   } catch (err) {
     console.error("Confirmation SMS error:", err);
   }
