@@ -285,6 +285,10 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
       .where("__name__", "in", ticketIds)
       .get();
 
+    const baseUrl = (process.env.FRONTEND_URL || "https://ticketmasters.vercel.app")
+      .trim()
+      .replace(/\/$/, ""); // clean trailing slash/newline
+
     const ticketEntries = ticketsSnapshot.docs.map((d) => {
       const data = d.data();
       return {
@@ -298,8 +302,8 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
 
     const ticketLines = ticketEntries
       .map((t) => {
-        const url = `${process.env.FRONTEND_URL || "https://ticketmasters.vercel.app"}/tickets/${t.id}${t.guest_secret ? `?guest_secret=${t.guest_secret}` : ""}`;
-        return `• ${t.seat_type.toUpperCase()} - ${t.seat_number} - KES ${t.amount}\nView your ticket: ${url}`;
+        const url = `${baseUrl}/tickets/${t.id}${t.guest_secret ? `?guest_secret=${t.guest_secret}` : ""}`;
+        return `• ${t.seat_type.toUpperCase()} - ${t.seat_number} - KES ${t.amount}\n  ${url}`;
       })
       .join("\n\n");
 
@@ -310,10 +314,13 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
     const message = `${header}${ticketLines}\n\nThank you for choosing FootballTickets!`.trim();
 
     console.log("📲 Confirmation SMS would be sent to:", phoneNumber);
-    console.log("Message:", message);
+    console.log("Message:\n" + message);
 
-    // Optional: send SMS via API
-    // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', { phoneNumber, message });
+    // Optional: Send via SMS API if configured
+    // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', {
+    //   phoneNumber,
+    //   message,
+    // });
   } catch (err) {
     console.error("Confirmation SMS error:", err);
   }
