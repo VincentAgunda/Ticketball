@@ -8,24 +8,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 /* -------------------------------------------------------------------------- */
-/* 🌍 CORS CONFIGURATION (Supports Render + Local Development)                */
+/* 🌍 CORS CONFIGURATION                                                      */
 /* -------------------------------------------------------------------------- */
+const normalize = (url) => url?.trim().replace(/\/$/, ""); // remove trailing slash
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://ticketmasters.vercel.app", // ✅ Production frontend
-  process.env.FRONTEND_URL, // ✅ Optional env fallback
+  "https://ticketmasters.vercel.app",
+  normalize(process.env.FRONTEND_URL),
 ].filter(Boolean);
+
+console.log("✅ Allowed Origins:", allowedOrigins);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests from allowed origins or tools like Postman (no origin)
-      if (!origin || allowedOrigins.includes(origin)) {
+      const normalizedOrigin = origin ? normalize(origin) : origin;
+      if (!origin || allowedOrigins.includes(normalizedOrigin)) {
         callback(null, true);
       } else {
         console.warn(`🚫 CORS blocked request from: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true,
@@ -34,7 +38,7 @@ app.use(
   })
 );
 
-// ✅ Handle OPTIONS preflight requests globally (important for CORS)
+// ✅ Handle OPTIONS preflight requests globally
 app.options("*", cors());
 
 /* -------------------------------------------------------------------------- */
@@ -49,7 +53,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/sms", smsRoutes);
 
-// ✅ Health check route
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -61,21 +64,13 @@ app.get("/api/health", (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* 🧱 ERROR HANDLERS                                                          */
 /* -------------------------------------------------------------------------- */
-// Global error handler
 app.use((error, req, res, next) => {
   console.error("Unhandled error:", error);
-  res.status(500).json({
-    success: false,
-    error: "Internal server error",
-  });
+  res.status(500).json({ success: false, error: "Internal server error" });
 });
 
-// Catch-all for unknown routes
 app.use(/.*/, (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: "Route not found",
-  });
+  res.status(404).json({ success: false, error: "Route not found" });
 });
 
 /* -------------------------------------------------------------------------- */
@@ -84,6 +79,4 @@ app.use(/.*/, (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🌍 Allowed origins: ${allowedOrigins.join(", ")}`);
-  console.log(`🌎 Environment: ${process.env.NODE_ENV || "development"}`);
 });
