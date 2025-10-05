@@ -37,8 +37,8 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// ✅ Correct wildcard for Express 5
-app.options("*", cors(corsOptions));
+// ✅ FIX: Use regex to match all preflight requests (Express 5 safe)
+app.options(/.*/, cors(corsOptions));
 
 /* -------------------------------------------------------------------------- */
 /* ⚙️ MIDDLEWARES                                                             */
@@ -53,7 +53,7 @@ app.use(cors(corsOptions));
 app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/sms", smsRoutes);
 
-// ✅ Health check route for Render uptime monitor
+// ✅ Health check route for Render
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -74,9 +74,9 @@ app.use((error, req, res, next) => {
 });
 
 /* -------------------------------------------------------------------------- */
-/* 🧭 FALLBACK / 404 HANDLER                                                  */
+/* 🧭 404 HANDLER                                                             */
 /* -------------------------------------------------------------------------- */
-app.use("*", (req, res) => {
+app.use(/.*/, (req, res) => {
   res.status(404).json({ success: false, error: "Route not found" });
 });
 
