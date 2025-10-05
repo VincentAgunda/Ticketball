@@ -37,16 +37,15 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-app.use(cors(corsOptions));
-
-// ✅ Fix: Use "/*" instead of "*" to prevent PathError in Express 5+
-app.options("/*", cors(corsOptions));
+// ✅ Correct wildcard for Express 5
+app.options("*", cors(corsOptions));
 
 /* -------------------------------------------------------------------------- */
 /* ⚙️ MIDDLEWARES                                                             */
 /* -------------------------------------------------------------------------- */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
 
 /* -------------------------------------------------------------------------- */
 /* 🚀 ROUTES                                                                  */
@@ -54,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/sms", smsRoutes);
 
-// Health check route
+// ✅ Health check route for Render uptime monitor
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -67,15 +66,17 @@ app.get("/api/health", (req, res) => {
 /* 🧱 ERROR HANDLERS                                                          */
 /* -------------------------------------------------------------------------- */
 app.use((error, req, res, next) => {
-  console.error("Unhandled error:", error.message || error);
+  console.error("❌ Unhandled error:", error.message || error);
   res.status(500).json({
     success: false,
     error: error.message || "Internal server error",
   });
 });
 
-// Catch-all for undefined routes
-app.use(/.*/, (req, res) => {
+/* -------------------------------------------------------------------------- */
+/* 🧭 FALLBACK / 404 HANDLER                                                  */
+/* -------------------------------------------------------------------------- */
+app.use("*", (req, res) => {
   res.status(404).json({ success: false, error: "Route not found" });
 });
 
