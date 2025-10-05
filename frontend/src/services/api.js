@@ -6,7 +6,7 @@ const API_BASE_URL = `${rawBase}/api`
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000, // Increased timeout for M-Pesa & SMS
+  timeout: 15000,
 })
 
 // ✅ Request interceptor (attach Firebase token if available)

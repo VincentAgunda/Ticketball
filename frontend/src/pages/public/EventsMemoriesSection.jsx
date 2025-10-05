@@ -6,9 +6,9 @@ import { motion } from "framer-motion"
 const portfolioMemories = [
   { id: 1, image: "/images/how-it-works-bg.jpg", caption: "Championship Glory" },
   { id: 2, image: "/images/home1.png", caption: "Fans in Action" },
-  { id: 3, image: "/images/home1.png", caption: "Team Spirit" },
+  { id: 3, image: "/images/hero.png", caption: "Team Spirit" },
   { id: 4, image: "/images/how-it-works1-bg.png", caption: "Historic Goal" },
-  { id: 5, image: "/images/how-it-works1-bg.png", caption: "Celebrations" },
+  { id: 5, image: "/images/home.png", caption: "Celebrations" },
   { id: 6, image: "/images/how-it-works-bg.jpg", caption: "Iconic Moments" },
   { id: 7, image: "/images/player2.png", caption: "Historic Goal" },
   { id: 8, image: "/images/player3.png", caption: "Celebrations" },

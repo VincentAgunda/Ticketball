@@ -188,7 +188,7 @@ const Home = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
         className="relative py-24 md:py-28 bg-cover bg-center overflow-hidden"
-        style={{ backgroundImage: "url('/images/hero1.png')" }}
+        style={{ backgroundImage: "url('/images/home.png')" }}
         aria-label="Hero: Experience Football"
       >
         <div className="absolute inset-0 bg-black/35 backdrop-blur-[2px]" />

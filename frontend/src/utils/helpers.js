@@ -1,4 +1,4 @@
-import { APP_CONFIG } from './constants'
+import { APP_CONFIG } from './constants';
 
 /* -------------------------------------------------------------------------- */
 /* ✅ Format currency for Kenya Shillings */
@@ -7,41 +7,41 @@ export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-KE', {
     style: 'currency',
     currency: 'KES'
-  }).format(amount)
+  }).format(amount);
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Robust Date Formatter (handles Firestore Timestamps, ISO strings, and numbers) */
+/* ✅ Robust Date Formatter */
 /* -------------------------------------------------------------------------- */
 export const formatDate = (dateInput, options = {}) => {
-  if (!dateInput) return 'Invalid Date'
+  if (!dateInput) return 'Invalid Date';
 
-  let date
+  let date;
 
   try {
     // Firestore Timestamp object
     if (typeof dateInput === 'object' && dateInput.seconds) {
-      date = new Date(dateInput.seconds * 1000)
+      date = new Date(dateInput.seconds * 1000);
     }
     // JS Date object
     else if (dateInput instanceof Date) {
-      date = dateInput
+      date = dateInput;
     }
     // UNIX timestamp (ms or s)
     else if (typeof dateInput === 'number') {
       date = new Date(
         dateInput.toString().length === 10 ? dateInput * 1000 : dateInput
-      )
+      );
     }
     // String (ISO or other)
     else {
-      date = new Date(dateInput)
+      date = new Date(dateInput);
     }
 
-    if (isNaN(date.getTime())) return 'Invalid Date'
+    if (isNaN(date.getTime())) return 'Invalid Date';
   } catch (err) {
-    console.error('Date parse error:', err, dateInput)
-    return 'Invalid Date'
+    console.error('Date parse error:', err, dateInput);
+    return 'Invalid Date';
   }
 
   const defaultOptions = {
@@ -50,27 +50,27 @@ export const formatDate = (dateInput, options = {}) => {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  }
+  };
 
-  return new Intl.DateTimeFormat('en-KE', { ...defaultOptions, ...options }).format(date)
+  return new Intl.DateTimeFormat('en-KE', { ...defaultOptions, ...options }).format(date);
 }
 
 /* -------------------------------------------------------------------------- */
 /* ✅ Generate seat map data */
 /* -------------------------------------------------------------------------- */
 export const generateSeatMap = (totalSeats, bookedSeats = []) => {
-  const { rows, seatsPerRow, vipRows, premiumRows } = APP_CONFIG.stadium
-  const seats = []
+  const { rows, seatsPerRow, vipRows, premiumRows } = APP_CONFIG.stadium;
+  const seats = [];
 
   for (let row = 1; row <= rows; row++) {
     for (let seat = 1; seat <= seatsPerRow; seat++) {
-      const seatNumber = `${String.fromCharCode(64 + row)}${seat}`
-      let type = 'standard'
+      const seatNumber = `${String.fromCharCode(64 + row)}${seat}`;
+      let type = 'standard';
 
-      if (vipRows.includes(row)) type = 'vip'
-      if (premiumRows.includes(row)) type = 'premium'
+      if (vipRows.includes(row)) type = 'vip';
+      if (premiumRows.includes(row)) type = 'premium';
 
-      const isBooked = bookedSeats.includes(seatNumber)
+      const isBooked = bookedSeats.includes(seatNumber);
 
       seats.push({
         number: seatNumber,
@@ -80,69 +80,88 @@ export const generateSeatMap = (totalSeats, bookedSeats = []) => {
         priceMultiplier: APP_CONFIG.seatTypes[type.toUpperCase()]?.priceMultiplier ?? 1,
         color: APP_CONFIG.seatTypes[type.toUpperCase()]?.color ?? '#ccc',
         available: !isBooked
-      })
+      });
     }
   }
 
-  return seats
+  return seats;
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Updated ticket price calculation (with fixed multipliers) */
+/* ✅ Updated ticket price calculation */
 /* -------------------------------------------------------------------------- */
 export const calculateTicketPrice = (basePrice, seatType) => {
   const multipliers = {
     'standard': 1,
     'vip': 1.5,
     'premium': 2
-  }
-  return Math.round(basePrice * (multipliers[seatType?.toLowerCase()] || 1))
+  };
+  return Math.round(basePrice * (multipliers[seatType?.toLowerCase()] || 1));
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Generate QR code data for tickets */
+/* ✅ IMPROVED: Generate QR code data for tickets - COMPATIBLE VERSION */
 /* -------------------------------------------------------------------------- */
 export const generateQRData = (ticketId, matchId, seatNumber) => {
-  return JSON.stringify({
-    ticketId,
-    matchId,
-    seatNumber,
-    timestamp: Date.now()
-  })
+  try {
+    const raw = `${ticketId}|${matchId}|${seatNumber}`;
+    
+    // Use simple Base64 encoding for better compatibility with scanner
+    // This avoids UTF-8 complications and works reliably across all devices
+    return btoa(raw);
+  } catch (error) {
+    console.error('QR generation error:', error);
+    // Fallback to raw data if Base64 fails (shouldn't happen with simple ASCII)
+    return `${ticketId}|${matchId}|${seatNumber}`;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ QR validation and deactivation system */
+/* ✅ COMPATIBLE QR validation and deactivation system */
 /* -------------------------------------------------------------------------- */
-
 /**
- * Validate a scanned QR code
- * @param {string} qrString - QR code string (JSON)
+ * Validate a scanned QR code (Base64 or plain text)
+ * @param {string} qrString - QR code string (Base64 or plain)
  * @returns {object} { valid: boolean, message: string, data?: object }
  */
 export const validateAndDeactivateQR = (qrString) => {
   try {
-    const data = JSON.parse(qrString)
-    if (!data.ticketId || !data.matchId || !data.seatNumber) {
-      return { valid: false, message: 'Invalid QR data format' }
+    let decoded;
+
+    // ✅ Try Base64 decoding first (compatible with new encoding)
+    try {
+      decoded = atob(qrString);
+    } catch {
+      // 🕐 Fallback for raw string (backward compatibility)
+      decoded = qrString;
+    }
+
+    const [ticketId, matchId, seatNumber] = decoded.split('|');
+
+    if (!ticketId || !matchId || !seatNumber) {
+      return { valid: false, message: 'Invalid QR data format' };
     }
 
     // Retrieve previously used QR codes
-    const usedQRCodes = JSON.parse(localStorage.getItem('usedQRCodes') || '[]')
+    const usedQRCodes = JSON.parse(localStorage.getItem('usedQRCodes') || '[]');
 
     // Check if already used
-    if (usedQRCodes.includes(data.ticketId)) {
-      return { valid: false, message: 'This ticket has already been used.' }
+    if (usedQRCodes.includes(ticketId)) {
+      return { valid: false, message: 'This ticket has already been used.' };
     }
 
     // Mark QR code as used
-    usedQRCodes.push(data.ticketId)
-    localStorage.setItem('usedQRCodes', JSON.stringify(usedQRCodes))
+    usedQRCodes.push(ticketId);
+    localStorage.setItem('usedQRCodes', JSON.stringify(usedQRCodes));
 
-    return { valid: true, message: 'Ticket validated successfully.', data }
+    return {
+      valid: true,
+      message: 'Ticket validated successfully.',
+      data: { ticketId, matchId, seatNumber }
+    };
   } catch (error) {
-    console.error('QR validation error:', error)
-    return { valid: false, message: 'Invalid or unreadable QR code.' }
+    console.error('QR validation error:', error);
+    return { valid: false, message: 'Invalid or unreadable QR code.' };
   }
 }
 
@@ -150,28 +169,25 @@ export const validateAndDeactivateQR = (qrString) => {
  * Reactivate (reset) all used QR codes — e.g., for testing or admin reset
  */
 export const resetUsedQRCodes = () => {
-  localStorage.removeItem('usedQRCodes')
+  localStorage.removeItem('usedQRCodes');
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Updated phone validation (Kenyan numbers: 07x..., 011..., or 254 versions) */
+/* ✅ Phone validation and formatting */
 /* -------------------------------------------------------------------------- */
 export const validatePhoneNumber = (phone) => {
-  const phoneRegex = /^(07\d{8}|011\d{7}|2547\d{8}|25411\d{7})$/
-  return phoneRegex.test(phone.replace(/\s/g, ''))
+  const phoneRegex = /^(07\d{8}|011\d{7}|2547\d{8}|25411\d{7})$/;
+  return phoneRegex.test(phone.replace(/\s/g, ''));
 }
 
-/* -------------------------------------------------------------------------- */
-/* ✅ Updated phone formatter (always return 254XXXXXXXXX) */
-/* -------------------------------------------------------------------------- */
 export const formatPhoneNumber = (phone) => {
-  const cleaned = phone.replace(/\D/g, '')
+  const cleaned = phone.replace(/\D/g, '');
   if (cleaned.startsWith('0')) {
-    return `254${cleaned.substring(1)}`
+    return `254${cleaned.substring(1)}`;
   } else if (cleaned.startsWith('254')) {
-    return cleaned
+    return cleaned;
   } else {
-    return `254${cleaned}`
+    return `254${cleaned}`;
   }
 }
 
@@ -179,23 +195,23 @@ export const formatPhoneNumber = (phone) => {
 /* ✅ Debounce function for search inputs */
 /* -------------------------------------------------------------------------- */
 export const debounce = (func, wait) => {
-  let timeout
+  let timeout;
   return function executedFunction(...args) {
     const later = () => {
-      clearTimeout(timeout)
-      func(...args)
-    }
-    clearTimeout(timeout)
-    timeout = setTimeout(later, wait)
-  }
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Check if user is admin (simple email-based check) */
+/* ✅ Check if user is admin */
 /* -------------------------------------------------------------------------- */
 export const isAdminUser = (email) => {
-  const adminDomains = ['@admin.com', '@footballtickets.com']
-  return adminDomains.some(domain => email?.endsWith(domain))
+  const adminDomains = ['@admin.com', '@footballtickets.com'];
+  return adminDomains.some(domain => email?.endsWith(domain));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -204,15 +220,47 @@ export const isAdminUser = (email) => {
 export const storage = {
   get: (key) => {
     try {
-      return JSON.parse(localStorage.getItem(key))
+      return JSON.parse(localStorage.getItem(key));
     } catch {
-      return null
+      return null;
     }
   },
   set: (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value))
+    localStorage.setItem(key, JSON.stringify(value));
   },
   remove: (key) => {
-    localStorage.removeItem(key)
+    localStorage.removeItem(key);
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/* ✅ NEW: Test QR compatibility function */
+/* -------------------------------------------------------------------------- */
+export const testQRCompatibility = () => {
+  const testData = {
+    ticketId: 'test123',
+    matchId: 'match456', 
+    seatNumber: 'A12'
+  };
+  
+  const qrData = generateQRData(testData.ticketId, testData.matchId, testData.seatNumber);
+  console.log('Generated QR:', qrData);
+  
+  // Test parsing
+  try {
+    const decoded = atob(qrData);
+    const parsed = decoded.split('|');
+    console.log('Parsed test data:', parsed);
+    
+    return {
+      success: parsed[0] === testData.ticketId && 
+               parsed[1] === testData.matchId && 
+               parsed[2] === testData.seatNumber,
+      generated: qrData,
+      parsed: decoded
+    };
+  } catch (error) {
+    console.error('Test failed:', error);
+    return { success: false, error: error.message };
   }
 }
