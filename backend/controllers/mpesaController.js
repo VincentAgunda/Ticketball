@@ -21,7 +21,7 @@ const initiateSTKPush = async (req, res) => {
       });
     }
 
-    // Format phone number to start with 254...
+    // Format phone number (e.g., 2547...)
     const formattedPhone = phoneNumber.startsWith("254")
       ? phoneNumber
       : `254${phoneNumber.substring(phoneNumber.length - 9)}`;
@@ -104,7 +104,6 @@ const handleCallback = async (req, res) => {
       const mpesaReceipt = items.find((i) => i.Name === "MpesaReceiptNumber")?.Value;
       const phoneNumber = items.find((i) => i.Name === "PhoneNumber")?.Value;
 
-      // Update payment request doc
       const paymentRequestRef = db.collection("payment_requests").doc(checkoutRequestId);
       await paymentRequestRef.update({
         status: "completed",
@@ -117,17 +116,16 @@ const handleCallback = async (req, res) => {
       const paymentRequest = paymentRequestDoc.data();
 
       if (!paymentRequest) {
-        console.warn("⚠️ Payment request missing for CheckoutRequestID:", checkoutRequestId);
+        console.warn("⚠️ Missing payment request for:", checkoutRequestId);
         return res.json({ ResultCode: 0, ResultDesc: "Success" });
       }
 
-      // account_reference format: matchId_ticket1_ticket2_...
+      // account_reference = matchId_ticket1_ticket2...
       const parts = (paymentRequest.account_reference || "").split("_");
       const matchId = parts[0];
       const ticketIds = parts.slice(1).filter(Boolean);
       const userId = paymentRequest.user_id || "guest";
 
-      // Load match data for SMS enrichment
       let matchData = null;
       if (matchId) {
         const matchDoc = await db.collection("matches").doc(matchId).get();
@@ -137,24 +135,21 @@ const handleCallback = async (req, res) => {
       const batch = db.batch();
 
       const generateSeatNumberForType = (type = "standard") => {
-        const t = (type || "standard").toString().toUpperCase();
+        const t = (type || "standard").toUpperCase();
         const num = Math.floor(1 + Math.random() * 999);
-        if (t === "STANDARD" || t === "STD") return `${t}${num}`;
-        if (t === "VIP") return `${t}${num}`;
-        return `${t}-${num}`;
+        return `${t}${num}`;
       };
 
       for (const ticketId of ticketIds) {
         const ticketRef = db.collection("tickets").doc(ticketId);
         const ticketDoc = await ticketRef.get();
         const exists = ticketDoc.exists;
-
         const existing = exists ? ticketDoc.data() : {};
         const seat_type = existing.seat_type || existing.type || "standard";
-        const seat_number =
-          existing.seat_number ||
-          generateSeatNumberForType(seat_type) ||
-          generateSeatNumberForType("standard");
+        const seat_number = existing.seat_number || generateSeatNumberForType(seat_type);
+
+        const guestSecret =
+          existing.guest_secret || (userId === "guest" ? generateGuestSecret() : null);
 
         if (exists) {
           batch.update(ticketRef, {
@@ -167,8 +162,7 @@ const handleCallback = async (req, res) => {
             updated_at: new Date().toISOString(),
           });
         } else {
-          // Auto-create ticket doc for guest
-          const autoTicket = {
+          batch.set(ticketRef, {
             status: "active",
             mpesa_receipt: mpesaReceipt,
             payment_status: "completed",
@@ -182,15 +176,12 @@ const handleCallback = async (req, res) => {
             away_team: matchData?.away_team || null,
             venue: matchData?.venue || null,
             match_date: matchData?.match_date || null,
-            guest_secret: existing.guest_secret || (userId === "guest" ? generateGuestSecret() : null),
+            guest_secret: guestSecret,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          };
-
-          batch.set(ticketRef, autoTicket);
+          });
         }
 
-        // Log payment
         const paymentRef = db.collection("payments").doc();
         batch.set(paymentRef, {
           ticket_id: ticketId,
@@ -206,12 +197,10 @@ const handleCallback = async (req, res) => {
 
       await batch.commit();
 
-      // Reduce available seats
       if (matchId && ticketIds.length > 0) {
         await updateMatchSeats(matchId, ticketIds.length);
       }
 
-      // Send confirmation SMS
       await sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, userId);
     } else {
       // ❌ Payment failed
@@ -252,7 +241,7 @@ async function updateMatchSeats(matchId, seatsToReduce) {
     const matchRef = db.collection("matches").doc(matchId);
     const matchDoc = await matchRef.get();
     if (!matchDoc.exists) {
-      console.warn(`⚠️ Match ${matchId} not found when updating seats.`);
+      console.warn(`⚠️ Match ${matchId} not found.`);
       return;
     }
     const currentSeats = Number(matchDoc.data().available_seats || 0);
@@ -268,7 +257,7 @@ async function updateMatchSeats(matchId, seatsToReduce) {
 }
 
 /**
- * ✅ Fixed: Compose and send confirmation SMS
+ * ✅ Compose and send confirmation SMS (full ticket URLs)
  */
 async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, userId) {
   try {
@@ -287,7 +276,7 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
 
     const baseUrl = (process.env.FRONTEND_URL || "https://ticketmasters.vercel.app")
       .trim()
-      .replace(/\/$/, ""); // clean trailing slash/newline
+      .replace(/\/$/, "");
 
     const ticketEntries = ticketsSnapshot.docs.map((d) => {
       const data = d.data();
@@ -303,7 +292,7 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
     const ticketLines = ticketEntries
       .map((t) => {
         const url = `${baseUrl}/tickets/${t.id}${t.guest_secret ? `?guest_secret=${t.guest_secret}` : ""}`;
-        return `• ${t.seat_type.toUpperCase()} - ${t.seat_number} - KES ${t.amount}\n  ${url}`;
+        return `🎟 ${t.seat_type.toUpperCase()} • ${t.seat_number} • KES ${t.amount}\n👉 ${url}`;
       })
       .join("\n\n");
 
@@ -316,7 +305,7 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
     console.log("📲 Confirmation SMS would be sent to:", phoneNumber);
     console.log("Message:\n" + message);
 
-    // Optional: Send via SMS API if configured
+    // To actually send via SMS API:
     // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', {
     //   phoneNumber,
     //   message,
