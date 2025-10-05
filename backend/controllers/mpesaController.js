@@ -1,4 +1,3 @@
-// backend/controllers/mpesaController.js
 const axios = require("axios");
 const { db } = require("../config/firebase");
 const {
@@ -22,7 +21,7 @@ const initiateSTKPush = async (req, res) => {
       });
     }
 
-    // Format phone to 254...
+    // Format phone number to start with 254...
     const formattedPhone = phoneNumber.startsWith("254")
       ? phoneNumber
       : `254${phoneNumber.substring(phoneNumber.length - 9)}`;
@@ -56,20 +55,17 @@ const initiateSTKPush = async (req, res) => {
       }
     );
 
-    // Save payment request as number for amount
-    await db
-      .collection("payment_requests")
-      .doc(response.data.CheckoutRequestID)
-      .set({
-        user_id: userId,
-        phone_number: formattedPhone,
-        amount: Number(amount),
-        account_reference: accountReference,
-        checkout_request_id: response.data.CheckoutRequestID,
-        merchant_request_id: response.data.MerchantRequestID,
-        status: "pending",
-        created_at: new Date().toISOString(),
-      });
+    // Save payment request
+    await db.collection("payment_requests").doc(response.data.CheckoutRequestID).set({
+      user_id: userId,
+      phone_number: formattedPhone,
+      amount: Number(amount),
+      account_reference: accountReference,
+      checkout_request_id: response.data.CheckoutRequestID,
+      merchant_request_id: response.data.MerchantRequestID,
+      status: "pending",
+      created_at: new Date().toISOString(),
+    });
 
     res.json({
       success: true,
@@ -102,7 +98,7 @@ const handleCallback = async (req, res) => {
     const checkoutRequestId = callbackData.CheckoutRequestID;
 
     if (callbackData.ResultCode === 0) {
-      // Payment success
+      // ✅ Payment success
       const items = callbackData.CallbackMetadata?.Item || [];
       const amount = Number(items.find((i) => i.Name === "Amount")?.Value || 0);
       const mpesaReceipt = items.find((i) => i.Name === "MpesaReceiptNumber")?.Value;
@@ -131,7 +127,7 @@ const handleCallback = async (req, res) => {
       const ticketIds = parts.slice(1).filter(Boolean);
       const userId = paymentRequest.user_id || "guest";
 
-      // Load match data (if available) — used for enriching auto-created tickets & SMS
+      // Load match data for SMS enrichment
       let matchData = null;
       if (matchId) {
         const matchDoc = await db.collection("matches").doc(matchId).get();
@@ -140,14 +136,11 @@ const handleCallback = async (req, res) => {
 
       const batch = db.batch();
 
-      // helper: generate seat number by type
       const generateSeatNumberForType = (type = "standard") => {
         const t = (type || "standard").toString().toUpperCase();
-        const num = Math.floor(1 + Math.random() * 999); // random 1..999
-        // If type is exactly 'standard' mimic FRONTEND naming STANDARD1 etc.
+        const num = Math.floor(1 + Math.random() * 999);
         if (t === "STANDARD" || t === "STD") return `${t}${num}`;
         if (t === "VIP") return `${t}${num}`;
-        // fallback to A-###
         return `${t}-${num}`;
       };
 
@@ -156,7 +149,6 @@ const handleCallback = async (req, res) => {
         const ticketDoc = await ticketRef.get();
         const exists = ticketDoc.exists;
 
-        // determine seat_type and seat_number
         const existing = exists ? ticketDoc.data() : {};
         const seat_type = existing.seat_type || existing.type || "standard";
         const seat_number =
@@ -165,7 +157,6 @@ const handleCallback = async (req, res) => {
           generateSeatNumberForType("standard");
 
         if (exists) {
-          // Update existing ticket
           batch.update(ticketRef, {
             status: "active",
             mpesa_receipt: mpesaReceipt,
@@ -176,7 +167,7 @@ const handleCallback = async (req, res) => {
             updated_at: new Date().toISOString(),
           });
         } else {
-          // Auto-create ticket doc for any missing tickets (guest or fallback)
+          // Auto-create ticket doc for guest
           const autoTicket = {
             status: "active",
             mpesa_receipt: mpesaReceipt,
@@ -187,12 +178,10 @@ const handleCallback = async (req, res) => {
             match_id: matchId || null,
             seat_type,
             seat_number,
-            // copy match meta if available so front-end can show match info
             home_team: matchData?.home_team || null,
             away_team: matchData?.away_team || null,
             venue: matchData?.venue || null,
             match_date: matchData?.match_date || null,
-            // generate guest_secret for later guest access
             guest_secret: existing.guest_secret || (userId === "guest" ? generateGuestSecret() : null),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -201,7 +190,7 @@ const handleCallback = async (req, res) => {
           batch.set(ticketRef, autoTicket);
         }
 
-        // create payment log
+        // Log payment
         const paymentRef = db.collection("payments").doc();
         batch.set(paymentRef, {
           ticket_id: ticketId,
@@ -215,18 +204,17 @@ const handleCallback = async (req, res) => {
         });
       }
 
-      // Commit batch
       await batch.commit();
 
-      // reduce match seats
+      // Reduce available seats
       if (matchId && ticketIds.length > 0) {
         await updateMatchSeats(matchId, ticketIds.length);
       }
 
-      // Send SMS (or log)
+      // Send confirmation SMS
       await sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, userId);
     } else {
-      // Payment failed
+      // ❌ Payment failed
       const errorMessage = callbackData.ResultDesc;
       const paymentRequestRef = db.collection("payment_requests").doc(callbackData.CheckoutRequestID);
       await paymentRequestRef.update({
@@ -236,7 +224,6 @@ const handleCallback = async (req, res) => {
       });
     }
 
-    // Safely return to MPESA
     return res.json({ ResultCode: 0, ResultDesc: "Success" });
   } catch (err) {
     console.error("Callback error:", err);
@@ -248,20 +235,16 @@ const handleCallback = async (req, res) => {
  * Helper: generate guest secret
  */
 function generateGuestSecret() {
-  // crypto random fallback
   try {
-    if (typeof require === "function") {
-      const { randomUUID } = require("crypto");
-      return randomUUID();
-    }
-  } catch (e) {
-    // ignore
+    const { randomUUID } = require("crypto");
+    return randomUUID();
+  } catch {
+    return "gs_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }
-  return "gs_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
 /**
- * Update available seats for a match
+ * Update available seats
  */
 async function updateMatchSeats(matchId, seatsToReduce) {
   try {
@@ -285,29 +268,23 @@ async function updateMatchSeats(matchId, seatsToReduce) {
 }
 
 /**
- * Compose and send confirmation SMS (server-side log by default)
- * - Includes per-ticket URL (with guest_secret if present)
- * - Includes seat + seat type and amount
+ * ✅ Fixed: Compose and send confirmation SMS
  */
 async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, userId) {
   try {
-    if (!ticketIds || ticketIds.length === 0) return;
+    if (!ticketIds?.length) return;
 
-    // fetch match if available
     let match = null;
     if (matchId) {
       const mDoc = await db.collection("matches").doc(matchId).get();
       if (mDoc.exists) match = mDoc.data();
     }
 
-    // fetch tickets
-    // Firestore "in" supports up to 10 ids — safe for small batches
     const ticketsSnapshot = await db
       .collection("tickets")
       .where("__name__", "in", ticketIds)
       .get();
 
-    // Build per-ticket entries
     const ticketEntries = ticketsSnapshot.docs.map((d) => {
       const data = d.data();
       return {
@@ -319,30 +296,24 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
       };
     });
 
-    // Build message lines for tickets
     const ticketLines = ticketEntries
       .map((t) => {
-        const url =
-          `${process.env.FRONTEND_URL || "http://localhost:5173"}/tickets/${t.id}` +
-          (t.guest_secret ? `?guest_secret=${t.guest_secret}` : "");
-        return `• ${t.seat_type.toUpperCase()} - ${t.seat_number} - KES ${t.amount}\n  ${url}`;
+        const url = `${process.env.FRONTEND_URL || "https://ticketmasters.vercel.app"}/tickets/${t.id}${t.guest_secret ? `?guest_secret=${t.guest_secret}` : ""}`;
+        return `• ${t.seat_type.toUpperCase()} - ${t.seat_number} - KES ${t.amount}\nView your ticket: ${url}`;
       })
-      .join("\n");
+      .join("\n\n");
 
     const header = match
       ? `Your booking for ${match.home_team} vs ${match.away_team} is confirmed!\n`
       : `Your football ticket purchase is confirmed!\n`;
 
-    const message = `${header}\n${ticketLines}\n\nThank you for choosing FootballTickets!`;
+    const message = `${header}${ticketLines}\n\nThank you for choosing FootballTickets!`.trim();
 
-    // Log message (recommended: replace with real SMS send)
     console.log("📲 Confirmation SMS would be sent to:", phoneNumber);
     console.log("Message:", message);
 
-    // If you want to actually send SMS from here, call your SMS provider or smsController endpoint.
-    // Example (uncomment and set SMS_ENDPOINT env var): 
+    // Optional: send SMS via API
     // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', { phoneNumber, message });
-
   } catch (err) {
     console.error("Confirmation SMS error:", err);
   }
