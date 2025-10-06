@@ -69,26 +69,31 @@ function parseQRData(qrString) {
 }
 
 const TicketScanner = () => {
-  const [scans, setScans] = useState([]); // last scans
+  const [scans, setScans] = useState([]);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(null); // "success" | "error" | null
   const [cameraReady, setCameraReady] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For UI updates
 
   const videoRef = useRef(null);
   const scannerRef = useRef(null);
   const recentlyScanned = useRef(new Set());
+  const audioCtxRef = useRef(null); // Ref for single audio context
+  const isLoadingRef = useRef(false); // Ref to prevent concurrent scans and break dependency cycle
 
   /* Beep & Vibrate */
   const playSuccess = useCallback(() => {
-    // Try audio file first
     const audio = new Audio("/success-beep.mp3");
     audio.play().catch(() => {
-      // fallback to oscillator if file unavailable
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
+        if (!audioCtxRef.current) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) audioCtxRef.current = new AudioContext();
+        }
+        const ctx = audioCtxRef.current;
+        if (!ctx) return;
+        if (ctx.state === "suspended") ctx.resume(); // Attempt to resume if suspended
+        
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = "sine";
@@ -99,7 +104,7 @@ const TicketScanner = () => {
         o.start();
         o.stop(ctx.currentTime + 0.12);
       } catch {
-        // ignore
+        // ignore audio fallback errors
       }
     });
     if (navigator.vibrate) navigator.vibrate(120);
@@ -108,8 +113,9 @@ const TicketScanner = () => {
   /* Handle one scan */
   const handleScan = useCallback(
     async (raw) => {
-      if (!raw || loading) return;
-      // raw may be result object from QrScanner or string — accept both
+      // Use the ref to check if a scan is already in progress
+      if (!raw || isLoadingRef.current) return;
+      
       const dataString = typeof raw === "string" ? raw : raw?.data || raw?.raw || "";
       console.log("🔄 Processing QR scan:", dataString);
       const parsed = parseQRData(dataString);
@@ -122,7 +128,7 @@ const TicketScanner = () => {
 
       const { ticketId, matchId, seatNumber } = parsed;
 
-      // prevent duplicate reads for a short window
+      // Prevent duplicate reads for a short window
       if (recentlyScanned.current.has(ticketId)) {
         console.log("⏭️ Duplicate scan skipped:", ticketId);
         return;
@@ -130,7 +136,8 @@ const TicketScanner = () => {
       recentlyScanned.current.add(ticketId);
       setTimeout(() => recentlyScanned.current.delete(ticketId), 4000);
 
-      setLoading(true);
+      isLoadingRef.current = true; // Mark as busy
+      setLoading(true);           // Update state for the UI
       setMessage("");
       setStatus(null);
 
@@ -145,8 +152,7 @@ const TicketScanner = () => {
             { ticketId, status: "invalid", seat: seatNumber || "N/A", match: { home_team: "Unknown", away_team: "Unknown" } },
             ...prev.slice(0, 9),
           ]);
-          setLoading(false);
-          return;
+          return; // No finally block needed here, it will run anyway
         }
 
         const ticket = snapshot.data();
@@ -164,7 +170,6 @@ const TicketScanner = () => {
             ...prev.slice(0, 9),
           ]);
           playSuccess();
-          setLoading(false);
           return;
         }
 
@@ -187,27 +192,17 @@ const TicketScanner = () => {
           ...prev.slice(0, 9),
         ]);
 
-        // local cache
-        try {
-          const usedQRCodes = JSON.parse(localStorage.getItem("usedQRCodes") || "[]");
-          if (!usedQRCodes.includes(ticketId)) {
-            usedQRCodes.push(ticketId);
-            localStorage.setItem("usedQRCodes", JSON.stringify(usedQRCodes));
-          }
-        } catch {
-          // ignore localStorage errors
-        }
-
         playSuccess();
       } catch (err) {
         console.error("Validation error:", err);
         setStatus("error");
         setMessage("⚠️ Error validating ticket - please try again");
       } finally {
-        setLoading(false);
+        setLoading(false); // Update UI
+        isLoadingRef.current = false; // Unmark as busy
       }
     },
-    [loading, playSuccess]
+    [playSuccess] // Now stable, only depends on the stable playSuccess function
   );
 
   /* Initialize scanner */
@@ -219,14 +214,6 @@ const TicketScanner = () => {
 
     const initScanner = async () => {
       try {
-        // hint: create a canvas with willReadFrequently to reduce console warnings in Chrome
-        try {
-          const tmp = document.createElement("canvas");
-          tmp.getContext("2d", { willReadFrequently: true });
-        } catch {
-          // ignore if not supported
-        }
-
         const cams = await QrScanner.listCameras();
         if (!mounted) return;
         if (cams.length === 0) throw new Error("No cameras found");
@@ -234,7 +221,6 @@ const TicketScanner = () => {
         const scanner = new QrScanner(
           videoElem,
           (result) => {
-            // QrScanner returns either result.data (string) or result (string depending on options)
             const payload = result?.data ?? result;
             handleScan(payload);
           },
@@ -274,7 +260,7 @@ const TicketScanner = () => {
         console.log("🧹 Camera cleaned up");
       }
     };
-  }, [handleScan]);
+  }, [handleScan]); // This effect now runs only once because handleScan is stable
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col items-center p-6 font-sans relative">
