@@ -258,7 +258,21 @@ async function updateMatchSeats(matchId, seatsToReduce) {
 }
 
 /**
- * ✅ Compose and send structured confirmation SMS (fixed: URL always single line)
+ * ✅ Shorten URLs (TinyURL API)
+ */
+async function shortenUrl(longUrl) {
+  try {
+    const res = await axios.get(
+      `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`
+    );
+    return res.data;
+  } catch {
+    return longUrl;
+  }
+}
+
+/**
+ * ✅ Compose and send structured confirmation SMS (URL always single line + shortened)
  */
 async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, userId) {
   try {
@@ -304,9 +318,9 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
       const ticketPrice = Math.round(Number(t.amount || amount || 0) * 100) / 100;
       const guestSecret = t.guest_secret ? `?guest_secret=${t.guest_secret}` : "";
 
-      // Build URL and remove any accidental whitespace/newlines inside it
-      let ticketUrl = `${baseUrl}/tickets/${ticketId}${guestSecret}`;
-      ticketUrl = ticketUrl.replace(/(\r\n|\n|\r|\s)+/g, "");
+      let rawUrl = `${baseUrl}/tickets/${ticketId}${guestSecret}`;
+      rawUrl = rawUrl.replace(/(\r\n|\n|\r|\s)+/g, "");
+      const ticketUrl = (await shortenUrl(rawUrl)).trim();
 
       const lines = [
         "FOOTBALL TICKET CONFIRMED",
@@ -319,7 +333,7 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
         `Price: KES ${ticketPrice}`,
         `Ticket ID: ${ticketId}`,
         "",
-        `View your ticket: ${ticketUrl}`, // <-- full URL on same line
+        `View your ticket: ${ticketUrl}`, // <-- full, shortened, single-line URL
         "",
         "IMPORTANT:",
         "• Present QR code at entrance",
@@ -331,15 +345,18 @@ async function sendConfirmationSMS(phoneNumber, ticketIds, amount, matchId, user
         "Thank you for choosing FootballTickets!",
       ];
 
-      const message = lines.join("\n");
+      const message = lines.join("\n")
+        .replace(/\n+/g, "\n")
+        .replace(/(View your ticket: )([^\s]+)/, (_, prefix, url) => prefix + url.replace(/\s+/g, ""));
 
       console.log("📲 Confirmation SMS would be sent to:", phoneNumber);
       console.log("Message:\n" + message);
 
-      // Actual SMS send (uncomment / replace with your provider call)
+      // Uncomment this in production:
       // await axios.post(process.env.SMS_ENDPOINT || 'http://localhost:5000/api/sms/send-ticket', {
       //   phoneNumber,
       //   message,
+      //   type: "plain",
       // });
     }
   } catch (err) {

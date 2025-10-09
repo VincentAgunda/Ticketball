@@ -88,9 +88,7 @@ const Header = () => {
             >
               <SportsSoccer className="h-7 w-7 text-gray-800" />
             </motion.div>
-            <span className="text-lg font-semibold tracking-tight text-gray-900">
-              TicketCenter
-            </span>
+           
           </Link>
 
           {/* Desktop Nav */}
