@@ -1,24 +1,18 @@
-import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-
-// Reusable variants for smooth animations
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
-}
-
-const fadeLeft = {
-  hidden: { opacity: 0, x: -30 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: "easeOut" } },
-}
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const fadeScale = {
-  hidden: { opacity: 0, scale: 0.95, y: 40 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
-}
+  hidden: { opacity: 0, scale: 0.96, y: 40 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: "easeOut" },
+  },
+};
 
 const CallToAction = () => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <section className="relative max-w-7xl mx-auto my-20 rounded-3xl overflow-hidden shadow-xl">
@@ -33,90 +27,62 @@ const CallToAction = () => {
           ease: "linear",
           repeat: Infinity,
         }}
-        style={{ backgroundSize: "200% 200%" }}
+        style={{ backgroundSize: "200% 200%", willChange: "background-position" }}
       />
 
-      {/* Main Section */}
+      {/* Main Content */}
       <motion.div
         className="relative grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-8 py-20"
         variants={fadeScale}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        viewport={{ once: true }}
       >
         {/* Left Section */}
         <div className="flex flex-col justify-center">
-          <motion.h2
-            className="text-5xl font-semibold text-gray-900 mb-6 leading-tight"
-            variants={fadeLeft}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
+          <h2 className="text-5xl font-semibold text-gray-900 mb-6 leading-tight">
             Let’s build the future of football.
-          </motion.h2>
+          </h2>
 
-          <motion.p
-            className="text-lg text-gray-800 mb-8"
-            variants={fadeLeft}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
+          <p className="text-lg text-gray-800 mb-8">
             Subscribe or partner with us to create unforgettable football experiences
-          </motion.p>
+          </p>
 
-          <motion.button
+          <button
             onClick={() => setOpen(true)}
-            className="bg-black text-white px-8 py-3 rounded-full font-medium shadow-lg hover:opacity-90 transition"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
+            className="bg-black text-white px-8 py-3 rounded-full font-medium shadow-lg hover:scale-105 transition-transform duration-200 will-change-transform"
           >
             Partner with us
-          </motion.button>
+          </button>
         </div>
 
         {/* Right Floating Image */}
-        <motion.div
-          className="flex justify-center lg:justify-end"
-          variants={fadeScale}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-        >
+        <div className="flex justify-center lg:justify-end">
           <motion.img
             src="/images/calltoaction.png"
             alt="Promo"
             className="w-80 h-80 object-contain"
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            style={{ willChange: "transform" }}
           />
-        </motion.div>
+        </div>
       </motion.div>
 
-      {/* Floating Action Button (appears only after section is in view) */}
+      {/* Floating Action Button */}
       <motion.div
         className="absolute bottom-6 left-6"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.5 }}
-        transition={{ duration: 0.8, type: "spring" }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <motion.button
+        <button
           onClick={() => setOpen(true)}
-          className="bg-black text-white px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition"
-          whileHover={{ scale: 1.1, rotate: -2 }}
-          whileTap={{ scale: 0.9 }}
+          className="bg-black text-white px-6 py-3 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 will-change-transform"
         >
           Action
-        </motion.button>
+        </button>
       </motion.div>
 
       {/* Popup Modal */}
@@ -191,7 +157,7 @@ const CallToAction = () => {
         )}
       </AnimatePresence>
     </section>
-  )
-}
+  );
+};
 
-export default CallToAction
+export default CallToAction;
