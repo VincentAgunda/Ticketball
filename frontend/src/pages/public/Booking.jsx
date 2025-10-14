@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  SportsSoccer,
-  CalendarToday,
-  LocationOn,
-  EventSeat,
   ArrowBack,
-  Warning,
   CheckCircle,
+  EventSeat,
+  Warning,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useMatches, useUserTickets } from '../../hooks/useFirebase';
@@ -20,7 +17,8 @@ import {
   validatePhoneNumber,
   formatPhoneNumber,
 } from '../../utils/helpers';
-import { getTeamLogo } from '../../utils/constants';
+import BookingCard from './BookingCard';
+import Payment from './Payment';
 
 const Booking = () => {
   const { matchId } = useParams();
@@ -37,6 +35,16 @@ const Booking = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [createdTickets, setCreatedTickets] = useState([]);
+
+  // --- START: ADDED CODE ---
+  // Effect to scroll to the top of the page whenever the component mounts or the booking step changes.
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' // Provides a smooth scrolling effect
+    });
+  }, [step]); // Dependency array ensures this runs on mount and when 'step' changes.
+  // --- END: ADDED CODE ---
 
   // total amount
   const totalAmount = selectedTickets.reduce(
@@ -59,10 +67,14 @@ const Booking = () => {
     return null;
   }, []);
 
-  // ✅ FIXED: Fixed useEffect to prevent infinite loops
+  // Prevent infinite loop, set match once
   useEffect(() => {
-    if (!matchId || !matches || matches.length === 0) {
-      if (matches && matches.length === 0 && !loading) {
+    if (!matchId || !matches) {
+      return;
+    }
+    if (matches.length === 0) {
+      // matches firestore hook may still be loading; rely on matchesLoading externally
+      if (!matchesLoading) {
         setError('Match not found');
         setLoading(false);
       }
@@ -76,12 +88,11 @@ const Booking = () => {
       return;
     }
 
-    // Only update if match actually changed
     if (!match || match.id !== foundMatch.id) {
       setMatch(foundMatch);
       setLoading(false);
     }
-  }, [matchId, matches, loading, match]);
+  }, [matchId, matches, matchesLoading, match]);
 
   const handleSeatSelectionChange = useCallback((selection) => {
     setSelectedTickets(selection.tickets || []);
@@ -104,7 +115,6 @@ const Booking = () => {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
       return window.crypto.randomUUID();
     }
-    // fallback - not cryptographically strong but fine for guest_secret if you accept it
     return 'gs_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }, []);
 
@@ -142,7 +152,7 @@ const Booking = () => {
 
         const ticketData = {
           match_id: matchId,
-          user_id: user?.uid || null, // allow anonymous booking
+          user_id: user?.uid || null,
           user_email: user?.email || 'guest',
           user_name: user?.displayName || 'Guest User',
           user_phone: normalizedPhone,
@@ -176,7 +186,6 @@ const Booking = () => {
   const sendConfirmationSMS = useCallback(async (tickets, matchData) => {
     try {
       for (const ticket of tickets) {
-        // ensure we have a phone number on the ticket
         if (!ticket.user_phone && !ticket.user_phone_number && !phoneNumber) continue;
 
         const guestLink = ticket.guest_secret
@@ -184,19 +193,17 @@ const Booking = () => {
           : `${window.location.origin}/tickets/${ticket.id}`;
 
         try {
-          // Compose message with direct download/view URL
           const message = matchData
             ? `Your ticket (${ticket.id?.slice(0,8).toUpperCase()}) for ${matchData.home_team} vs ${matchData.away_team} is confirmed.\nSeat: ${ticket.seat_number || 'TBA'}.\nDownload/View ticket: ${guestLink}\nThank you for booking with FootballTickets.`
             : `Your ticket (${ticket.id?.slice(0,8).toUpperCase()}) is confirmed.\nDownload/View ticket: ${guestLink}\nThank you for booking with FootballTickets.`;
 
-          // Send message to server SMS endpoint; server may accept `message` as payload and use it
           const result = await smsService.sendTicketSMS({
             ticket,
             user: {
               id: user?.uid || 'guest',
               email: user?.email || 'guest',
             },
-            message, // <-- include explicit message with download URL
+            message,
           });
 
           if (result && result.success) {
@@ -210,7 +217,6 @@ const Booking = () => {
           }
         } catch (err) {
           console.error('SMS error:', err);
-          // Don't throw — continue with others
         }
 
         // small delay to avoid rate limits
@@ -218,7 +224,6 @@ const Booking = () => {
       }
     } catch (err) {
       console.error('Error in SMS sending process:', err);
-      // Don't block booking on SMS failure
     }
   }, [user, updateTicket, phoneNumber]);
 
@@ -247,7 +252,6 @@ const Booking = () => {
       const mpesaResp = await mpesaService.initiatePayment({
         phoneNumber: formatPhoneNumber(phoneNumber),
         amount: totalAmount,
-        // ✅ IMPORTANT: include matchId so backend can split into [matchId, ticket1, ticket2...]
         accountReference: `${matchId}_${tickets.map(t => t.id).join('_')}`,
         transactionDesc: `Tickets for ${match.home_team} vs ${match.away_team}`,
       });
@@ -294,7 +298,7 @@ const Booking = () => {
         });
       }
 
-      // send SMS confirmations with guest link (message includes download URL)
+      // send SMS confirmations with guest link
       await sendConfirmationSMS(tickets, match);
 
       // refresh user tickets (for logged in users)
@@ -304,7 +308,6 @@ const Booking = () => {
 
       setStep(3);
     } catch (err) {
-      // mark tickets payment_failed if created
       if (tickets.length > 0) {
         try {
           await updateTicketsStatus(tickets, 'payment_failed', {
@@ -319,8 +322,8 @@ const Booking = () => {
       setProcessing(false);
     }
   }, [
-    phoneNumber, match, selectedTickets, createTickets, totalAmount, 
-    updateTicketsStatus, updateMatch, matchId, totalSeatsSelected, 
+    phoneNumber, match, selectedTickets, createTickets, totalAmount,
+    updateTicketsStatus, updateMatch, matchId, totalSeatsSelected,
     sendConfirmationSMS, user, refetchTickets
   ]);
 
@@ -372,9 +375,7 @@ const Booking = () => {
             <React.Fragment key={stepItem.number}>
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm ${
-                    step >= stepItem.number ? 'bg-[#0B1B32] text-white' : 'bg-white/40 text-[#0B1B32]'
-                  }`}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm ${step >= stepItem.number ? 'bg-[#0B1B32] text-white' : 'bg-white/40 text-[#0B1B32]'}`}
                 >
                   {stepItem.number}
                 </div>
@@ -388,91 +389,20 @@ const Booking = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Match Details */}
+          {/* Match Details (left) */}
           <div className="lg:col-span-1">
-            <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 sticky top-6 border border-white/30">
-              <h2 className="text-xl font-bold text-[#0B1B32] mb-4">Match Details</h2>
-
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-200 shadow-sm">
-                    <img
-                      src={getTeamLogo(match.home_team)}
-                      alt={match.home_team}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="text-sm mt-2">{match.home_team}</span>
-                </div>
-
-                <span className="font-bold text-lg">VS</span>
-
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-200 shadow-sm">
-                    <img
-                      src={getTeamLogo(match.away_team)}
-                      alt={match.away_team}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="text-sm mt-2">{match.away_team}</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <SportsSoccer className="h-6 w-6 text-[#0B1B32]" />
-                  <div className="font-semibold">{match.home_team} vs {match.away_team}</div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <CalendarToday className="h-6 w-6 text-[#0B1B32]" />
-                  <div>{matchDate ? formatDate(matchDate) : 'Date not available'}</div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <LocationOn className="h-6 w-6 text-[#0B1B32]" />
-                  <div>{match.venue || 'TBD'}</div>
-                </div>
-
-                <div className="border-t border-white/30 pt-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Base Ticket Price:</span>
-                    <span>{formatCurrency(match.ticket_price || 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Available Seats:</span>
-                    <span className={`font-semibold ${ (match.available_seats || 0) < 10 ? 'text-red-600' : 'text-green-600'}`}>
-                      {match.available_seats ?? 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {selectedTickets.length > 0 && (
-                <div className="border-t border-white/30 pt-4 mt-4">
-                  <h3 className="font-semibold mb-2 flex items-center">
-                    <EventSeat className="h-5 w-5 mr-2 text-[#0B1B32]" />
-                    Selected Tickets ({totalSeatsSelected})
-                  </h3>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {selectedTickets.map((ticket, index) => (
-                      <div key={`${ticket.type}-${index}`} className="flex justify-between text-sm bg-white/50 p-2 rounded-lg">
-                        <span>{ticket.quantity} x {ticket.type.toUpperCase()} Ticket{ticket.quantity > 1 ? 's' : ''}</span>
-                        <span className="font-medium">{formatCurrency(ticket.price * ticket.quantity)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-white/30 mt-3 pt-3 font-semibold flex justify-between text-lg">
-                    <span>Total:</span>
-                    <span className="text-[#0B1B32]">{formatCurrency(totalAmount)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <BookingCard
+              match={match}
+              matchDate={matchDate}
+              selectedTickets={selectedTickets}
+              totalSeatsSelected={totalSeatsSelected}
+              totalAmount={totalAmount}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+            />
           </div>
 
-          {/* Booking Flow */}
+          {/* Booking Flow (right) */}
           <div className="lg:col-span-2 space-y-8">
             {step === 1 && (
               <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/30">
@@ -507,70 +437,17 @@ const Booking = () => {
             )}
 
             {step === 2 && (
-              <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/30">
-                <h2 className="text-2xl font-bold mb-6 text-[#0B1B32]">Payment Details</h2>
-                {error && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
-                    <Warning className="h-5 w-5 mr-2" />
-                    {error}
-                  </div>
-                )}
-                <div className="space-y-6">
-                  <div className="bg-[#EBF0F6] rounded-2xl p-5 border border-[#0B1B32]/20">
-                    <h3 className="font-semibold mb-3 text-lg text-[#0B1B32]">Order Summary</h3>
-                    {selectedTickets.map((ticket, index) => (
-                      <div key={`${ticket.type}-${index}`} className="flex justify-between text-sm mb-2">
-                        <span>{ticket.quantity} x {ticket.type.toUpperCase()} Ticket{ticket.quantity > 1 ? 's' : ''}</span>
-                        <span>{formatCurrency(ticket.price * ticket.quantity)}</span>
-                      </div>
-                    ))}
-                    <div className="border-t border-[#0B1B32]/20 mt-3 pt-3 font-semibold flex justify-between text-lg">
-                      <span>Total Amount:</span>
-                      <span className="text-[#0B1B32]">{formatCurrency(totalAmount)}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-[#0B1B32]">
-                      M-Pesa Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="0712345678"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      disabled={processing}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B1B32] focus:border-transparent"
-                    />
-                    <p className="text-sm mt-1 text-gray-600">
-                      Enter your M-Pesa registered phone number. We'll send payment request via STK Push.
-                    </p>
-                  </div>
-
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={handleBackToSeats}
-                      disabled={processing}
-                      className="flex-1 bg-gray-500 text-white py-3 rounded-2xl font-medium disabled:opacity-50 hover:bg-gray-600 transition"
-                    >
-                      Back to Tickets
-                    </button>
-                    <button
-                      onClick={handlePayment}
-                      disabled={processing || !phoneNumber}
-                      className="flex-1 bg-[#0B1B32] text-white py-3 rounded-2xl font-medium disabled:opacity-50 hover:opacity-90 transition"
-                    >
-                      {processing ? 'Processing Payment...' : `Pay ${formatCurrency(totalAmount)}`}
-                    </button>
-                  </div>
-
-                  {processing && (
-                    <div className="text-center text-[#0B1B32]">
-                      <p>Please check your phone for M-Pesa prompt...</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Payment
+                selectedTickets={selectedTickets}
+                totalAmount={totalAmount}
+                phoneNumber={phoneNumber}
+                setPhoneNumber={setPhoneNumber}
+                processing={processing}
+                error={error}
+                onBack={handleBackToSeats}
+                onPay={handlePayment}
+                formatCurrency={formatCurrency}
+              />
             )}
 
             {step === 3 && (
