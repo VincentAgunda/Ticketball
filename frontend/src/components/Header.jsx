@@ -21,10 +21,12 @@ const Header = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
+  // Close mobile menu on navigation
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [location])
 
+  // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (userMenuOpen && !e.target.closest(".user-menu-container")) {
@@ -53,7 +55,7 @@ const Header = () => {
     }
   }
 
-  // Robust scroll helper - retries a few times if element isn't immediately present
+  // Smooth scroll helper with retry logic
   const scrollToId = (id) => {
     let attempts = 0
     const tryScroll = () => {
@@ -65,25 +67,21 @@ const Header = () => {
       }
       return false
     }
-
     if (!tryScroll()) {
       const interval = setInterval(() => {
-        if (tryScroll() || attempts > 20) {
-          clearInterval(interval)
-        }
+        if (tryScroll() || attempts > 20) clearInterval(interval)
       }, 50)
     }
   }
 
-  // Pressing News: if already on home, just scroll; otherwise navigate with state so Home scrolls to news
-  const scrollToNews = () => {
+  // Handles "News" button click for both desktop and mobile
+  const handleNewsClick = () => {
     setMobileMenuOpen(false)
     if (location.pathname === "/") {
       scrollToId("news-section")
-      return
+    } else {
+      navigate("/", { state: { target: "news" } })
     }
-    // navigate to home and tell Home to scroll to the news section
-    navigate("/", { state: { target: "news" } })
   }
 
   return (
@@ -125,7 +123,7 @@ const Header = () => {
               </Link>
             ))}
             <button
-              onClick={scrollToNews}
+              onClick={handleNewsClick}
               className="text-sm font-medium px-2 py-1 rounded-md text-gray-700 hover:text-black transition-colors"
             >
               News
@@ -290,7 +288,7 @@ const Header = () => {
                 ))}
 
                 <button
-                  onClick={scrollToNews}
+                  onClick={handleNewsClick}
                   className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
                 >
                   News
