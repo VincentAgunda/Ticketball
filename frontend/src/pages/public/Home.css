@@ -1,0 +1,159 @@
+/* src/pages/public/Home.css */
+
+/* ----- hero ----- */
+.bg-hero {
+  background-image: url("/images/home.png");
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+/* ----- marquee (logos) ----- */
+.marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0 1.5rem;
+}
+
+.marquee-track {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  /* we'll animate transform for best GPU performance */
+  animation: marquee 20s linear infinite;
+  will-change: transform;
+}
+
+.marquee-paused {
+  animation-play-state: paused;
+}
+
+.marquee-item {
+  width: 7rem; /* 28 * 1/4 */
+  height: 7rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background: white;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(11, 27, 50, 0.06);
+}
+
+/* image optimization hint */
+.marquee-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: translateZ(0);
+  will-change: transform;
+  image-rendering: auto;
+}
+
+/* marquee keyframes - translateX on track */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* if reduced motion is preferred (users setting) we keep it paused via JS */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* ----- small utilities ----- */
+.fixed-notice {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 50;
+  background: #16a34a;
+  color: white;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 20px rgba(11, 27, 50, 0.15);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: white;
+  border-radius: 999px;
+  margin-right: 0.5rem;
+  animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(.9); opacity: .9; }
+  50% { transform: scale(1.1); opacity: .6; }
+  100% { transform: scale(.9); opacity: .9; }
+}
+
+/* Back to top */
+.back-to-top {
+  position: fixed;
+  bottom: 5.25rem;
+  right: 1.25rem;
+  z-index: 60;
+  background: #0B1B32;
+  color: white;
+  padding: 0.6rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(11, 27, 50, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .14s ease;
+}
+.back-to-top:hover { transform: scale(1.08); }
+
+/* Buttons */
+.btn-primary {
+  background: #15291c;
+  color: white;
+  text-decoration: none;
+  padding: .75rem 1.25rem;
+  border-radius: .5rem;
+  box-shadow: 0 6px 18px rgba(11,27,50,0.08);
+  display: inline-block;
+}
+.btn-primary:hover { background: #0b2631; transform: translateY(-1px); }
+
+.btn-secondary {
+  background: white;
+  color: #0B1B32;
+  padding: .75rem 1.25rem;
+  border-radius: .5rem;
+  box-shadow: 0 6px 18px rgba(11,27,50,0.04);
+}
+.btn-secondary:hover { background: #f7f7f8; transform: translateY(-1px); }
+
+/* match card wrapper (lightweight) */
+.match-card-wrapper {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* a couple of safe defaults for images used sitewide */
+img {
+  max-width: 100%;
+  display: block;
+}

@@ -53,18 +53,37 @@ const Header = () => {
     }
   }
 
-  const scrollToNews = () => {
-    if (location.pathname === "/") {
-      const newsSection = document.getElementById("news-section")
-      if (newsSection) newsSection.scrollIntoView({ behavior: "smooth" })
-    } else {
-      navigate("/")
-      setTimeout(() => {
-        const newsSection = document.getElementById("news-section")
-        if (newsSection) newsSection.scrollIntoView({ behavior: "smooth" })
-      }, 500)
+  // Robust scroll helper - retries a few times if element isn't immediately present
+  const scrollToId = (id) => {
+    let attempts = 0
+    const tryScroll = () => {
+      attempts++
+      const el = document.getElementById(id)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
+        return true
+      }
+      return false
     }
+
+    if (!tryScroll()) {
+      const interval = setInterval(() => {
+        if (tryScroll() || attempts > 20) {
+          clearInterval(interval)
+        }
+      }, 50)
+    }
+  }
+
+  // Pressing News: if already on home, just scroll; otherwise navigate with state so Home scrolls to news
+  const scrollToNews = () => {
     setMobileMenuOpen(false)
+    if (location.pathname === "/") {
+      scrollToId("news-section")
+      return
+    }
+    // navigate to home and tell Home to scroll to the news section
+    navigate("/", { state: { target: "news" } })
   }
 
   return (
@@ -88,7 +107,6 @@ const Header = () => {
             >
               <SportsSoccer className="h-7 w-7 text-gray-800" />
             </motion.div>
-           
           </Link>
 
           {/* Desktop Nav */}
@@ -112,7 +130,7 @@ const Header = () => {
             >
               News
             </button>
-            {/* ✅ Admin-only Scanner Button */}
+
             {isAdmin && (
               <Link
                 to="/ticket-scanner"
@@ -226,7 +244,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* ✅ Mobile Drawer */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -278,7 +296,6 @@ const Header = () => {
                   News
                 </button>
 
-                {/* ✅ Admin scanner link on mobile */}
                 {isAdmin && (
                   <Link
                     to="/ticket-scanner"
