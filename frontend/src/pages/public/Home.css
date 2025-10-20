@@ -2,17 +2,20 @@
 
 /* ----- hero ----- */
 .bg-hero {
-  background-image: url("/images/how-it-works1-bg.png");
+  background-image: url("/images/hero-1.png");
   background-size: cover;
   background-position: center;
   position: relative;
 }
+
+/* Remove opacity + blur entirely */
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
+  background-color: transparent; /* fully clear */
+  backdrop-filter: none; /* remove blur */
 }
+
 
 /* ----- marquee (logos) ----- */
 .marquee-wrapper {
