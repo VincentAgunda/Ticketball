@@ -22,7 +22,7 @@ const newsArticles = [
     id: 1,
     title: "Chan League Final",
     subtitle: "What to Expect.",
-    image: "/images/calltoaction.png",
+    image: "/images/hero.png",
     content:
       "The Chan Champions League Final is the pinnacle of African club football, where two of the continent's best teams battle for glory. This year's final promises to be an electrifying encounter, with tactical masterclasses and individual brilliance expected from both sides. Fans can anticipate a high-octane match, filled with dramatic moments and potential upsets. Key players will be under immense pressure to perform, and the atmosphere in the stadium will be nothing short of breathtaking. Don't miss this clash of titans!",
   },

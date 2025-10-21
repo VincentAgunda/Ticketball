@@ -1,19 +1,27 @@
-// src/pages/public/TalentsSection.jsx
 import React, { useRef, useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 
-// Players data
+// Color palette provided by user
+const cardColors = [
+  { bg: "#F5F5F7", text: "text-black", button: "dark" }, // Light Grey
+  { bg: "#fafafa", text: "text-black", button: "dark" }, // Dark Grey
+  { bg: "#000000", text: "text-white", button: "light" }, // Black
+  { bg: "#979797", text: "text-white", button: "light" }, 
+  // Medium Grey
+]
+
+// Players data, now with colors assigned
 const players = [
-  { id: 1, name: "John Doe", role: "Forward", image: "/images/player3.png" },
-  { id: 2, name: "David Smith", role: "Goalkeeper", image: "/images/player2.png" },
-  { id: 3, name: "Chris Johnson", role: "Midfielder", image: "/images/how-it-works1-bg.png" },
-  { id: 4, name: "Michael Lee", role: "Defender", image: "/images/player2.png" },
-  { id: 5, name: "Samuel King", role: "Winger", image: "/images/player3.png" },
-  { id: 6, name: "Alex Carter", role: "Striker", image: "/images/how-it-works1-bg.png" },
-  { id: 7, name: "Ryan Brooks", role: "Midfielder", image: "/images/player2.png" },
-  { id: 8, image: "/images/player3.png", caption: "Celebrations" },
-  { id: 9, image: "/images/how-it-works-bg.jpg", caption: "Iconic Moments" },
+  { id: 1, name: "John Mark", role: "Forward", image: "/images/hero2.png", ...cardColors[0] },
+  { id: 2, name: "David Odhiambo", role: "Goalkeeper", image: "/images/player3.png", ...cardColors[1] },
+  { id: 3, name: "Chris Johnson", role: "Midfielder", image: "/images/how-it-works2-bg.png", ...cardColors[2] },
+  { id: 4, name: "Michael Riss", role: "Defender", image: "/images/hero2.png", ...cardColors[3] },
+  { id: 5, name: "Samuel King", role: "Winger", image: "/images/player3.png", ...cardColors[0] },
+  { id: 6, name: "Alex Carter", role: "Striker", image: "/images/how-it-works1-bg.png", ...cardColors[1] },
+  { id: 7, name: "Ryan Brooks", role: "Midfielder", image: "/images/player3.png", ...cardColors[2] },
+  { id: 8, name: "Alex Carter", role: "Striker", image: "/images/how-it-works2-bg.png", ...cardColors[1] },
+  { id: 9, name: "Ryan Brooks", role: "Midfielder", image: "/images/player3.png", ...cardColors[2] },
 ]
 
 const TalentsSection = React.memo(() => {
@@ -59,31 +67,16 @@ const TalentsSection = React.memo(() => {
   return (
     <section className="py-20 bg-[#fdfdfd] font-sans relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        {/* Heading */}
-        <div className="text-center mb-6">
-          <motion.h2
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl md:text-4xl font-semibold mb-2 text-[#0B1B32]"
-          >
-            Talents
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-[#0B1B32]/70 text-base md:text-lg max-w-2xl mx-auto"
-          >
-            Meet some of the stars who make every match unforgettable.
-          </motion.p>
-        </div>
+         {/* Section Header */}
+      <h2 className="text-5xl font-semibold tracking-tight text-center mb-16 text-black">
+        Meet Our Talents.
+      </h2>
 
         {/* Carousel */}
         <div className="relative">
           <div
             ref={carouselRef}
-            className="overflow-x-auto scrollbar-none snap-x snap-mandatory grid auto-cols-[minmax(260px,1fr)] grid-flow-col gap-6 py-6"
+            className="overflow-x-auto scrollbar-none snap-x snap-mandatory grid auto-cols-[minmax(280px,1fr)] md:auto-cols-[minmax(320px,1fr)] grid-flow-col gap-6 py-6"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             {players.map((player, i) => (
@@ -94,23 +87,50 @@ const TalentsSection = React.memo(() => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: i * 0.06 }}
-                className="snap-center relative rounded-2xl overflow-hidden h-[420px] flex flex-col justify-end group"
+                className="snap-center relative rounded-2xl overflow-hidden h-[420px] group"
                 style={{
-                  backgroundImage: `url(${player.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  backgroundColor: player.bg, // <-- Use solid background color
                 }}
                 role="article"
-                aria-label={`${player.name || "Player"} - ${player.role || ""}`}
+                aria-label={`${player.name || player.caption} - ${player.role || ""}`}
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
-                <div className="p-6 relative z-10">
-                  {player.role && <p className="text-sm text-white/80">{player.role}</p>}
-                  {player.name && <h3 className="text-2xl md:text-3xl font-semibold text-white">{player.name}</h3>}
+                {/* Text content at the top */}
+                <div className={`p-6 relative z-10 ${player.text}`}>
+                  {player.role && (
+                    <p className={`text-sm font-medium ${player.text}/80 mb-1`}>
+                      {player.role}
+                    </p>
+                  )}
+                  {player.name && (
+                    <h3 className="text-2xl md:text-3xl font-semibold">
+                      {player.name}
+                    </h3>
+                  )}
+                  {/* Handle items with only a caption */}
+                  {player.caption && !player.name && (
+                     <h3 className="text-2xl md:text-3xl font-semibold">
+                      {player.caption}
+                    </h3>
+                  )}
                 </div>
+                
+                {/* Image container (assumes transparent PNG) */}
+                <div className="absolute inset-x-0 bottom-0 h-4/5 pointer-events-none">
+                   <img
+                    src={player.image}
+                    alt={player.name || player.caption || "Player"}
+                    className="w-full h-full object-contain object-bottom"
+                  />
+                </div>
+
+                {/* Plus Button with dynamic colors */}
                 <button
                   aria-label={`View ${player.name || "player"}`}
-                  className="absolute bottom-6 right-6 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg"
+                  className={`absolute bottom-6 right-6 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg ${
+                    player.button === 'dark'
+                      ? "bg-black/80 text-white backdrop-blur-sm"
+                      : "bg-white/80 text-black backdrop-blur-sm"
+                  }`}
                 >
                   <Plus size={18} />
                 </button>
@@ -118,7 +138,7 @@ const TalentsSection = React.memo(() => {
             ))}
           </div>
 
-          {/* Dots + Arrows in one line */}
+          {/* Dots + Arrows in one line (unchanged) */}
           <div className="absolute left-0 right-0 bottom-0 translate-y-12 flex items-center justify-center px-6">
             {/* Dots center */}
             <div className="flex items-center space-x-2 bg-white/95 rounded-full px-4 py-2 shadow-md">
