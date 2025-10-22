@@ -14,7 +14,7 @@ const cardColors = [
 const players = [
   {
     id: 1,
-    name: "John Mark",
+    name: "John Joseph",
     role: "Forward",
     image: "/images/player3.png",
     description:
@@ -32,7 +32,7 @@ const players = [
   },
   {
     id: 3,
-    name: "Chris Johnson",
+    name: "Chris Luanda",
     role: "Midfielder",
     image: "/images/player3.png",
     description:
@@ -41,7 +41,7 @@ const players = [
   },
   {
     id: 4,
-    name: "Michael Riss",
+    name: "Michael Hawi",
     role: "Defender",
     image: "/images/hero2.png",
     description:
@@ -50,7 +50,7 @@ const players = [
   },
   {
     id: 5,
-    name: "Samuel King",
+    name: "Samuel Mavin",
     role: "Winger",
     image: "/images/player3.png",
     description:
@@ -59,7 +59,7 @@ const players = [
   },
   {
     id: 6,
-    name: "Alex Carter",
+    name: "Alex Okinyi",
     role: "Striker",
     image: "/images/how-it-works2-bg.png",
     description:
@@ -68,7 +68,7 @@ const players = [
   },
   {
     id: 7,
-    name: "Ryan Brooks",
+    name: "Ryan Okungu",
     role: "Midfielder",
     image: "/images/player3.png",
     description:
@@ -77,7 +77,7 @@ const players = [
   },
   {
     id: 8,
-    name: "Ethan Hunt",
+    name: "Ethan Wanjala",
     role: "Defender",
     image: "/images/how-it-works2-bg.png",
     description:
@@ -86,7 +86,7 @@ const players = [
   },
   {
     id: 9,
-    name: "Leo Garcia",
+    name: "Leo Serenkuma",
     role: "Forward",
     image: "/images/player3.png",
     description:
