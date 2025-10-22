@@ -1,10 +1,9 @@
-/* src/components/FootballHero.css */
-
+/* Smooth, GPU-optimized animated gradient */
 .bg-animated-gradient {
   background: linear-gradient(270deg, #e5e5e5, #dcdcdc, #ff7f11);
   background-size: 300% 300%;
   animation: moveGradient 12s ease-in-out infinite;
-  will-change: background-position;
+  will-change: background-position, transform;
   backface-visibility: hidden;
   transform: translateZ(0);
 }
@@ -19,4 +18,9 @@
   100% {
     background-position: 0% 50%;
   }
+}
+
+.perspective {
+  perspective: 1000px;
+  transform-style: preserve-3d;
 }

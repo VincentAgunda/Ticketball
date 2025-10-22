@@ -202,8 +202,8 @@ const Home = () => {
 
           <div className="rounded-2xl p-6 bg-white shadow-xl border border-gray-100">
             <div className="flex items-center space-x-3 mb-4">
-              <SportsSoccer className="h-7 w-7 text-[#0B1B32]" />
-              <h3 className="text-xl font-semibold text-[#0B1B32]">
+             
+              <h3 className="text-2xl font-semibold text-[#0B1B32]">
                 {loading ? "Loading Next Match..." : (nextMatch ? "Next Big Match" : "No Upcoming Matches")}
               </h3>
             </div>
