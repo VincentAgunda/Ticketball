@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react"
 
-// Color palette
+// Color palette provided by user (cleaned up)
 const cardColors = [
   { bg: "#000000", text: "text-white", button: "light" }, // Black
   { bg: "#F5F5F7", text: "text-black", button: "dark" }, // Off-white
@@ -10,7 +10,7 @@ const cardColors = [
   { bg: "#fafafa", text: "text-black", button: "dark" }, // Light Grey
 ]
 
-// Players data
+// Players data, with descriptions and corrected colors
 const players = [
   {
     id: 1,
@@ -41,7 +41,7 @@ const players = [
   },
   {
     id: 4,
-    name: "Michael Riss",
+    name: "Michael Okungu",
     role: "Defender",
     image: "/images/hero2.png",
     description:
@@ -50,7 +50,7 @@ const players = [
   },
   {
     id: 5,
-    name: "Samuel King",
+    name: "Samuel Abwanda",
     role: "Winger",
     image: "/images/player3.png",
     description:
@@ -59,7 +59,7 @@ const players = [
   },
   {
     id: 6,
-    name: "Alex Carter",
+    name: "Alex Oloo",
     role: "Striker",
     image: "/images/how-it-works2-bg.png",
     description:
@@ -68,7 +68,7 @@ const players = [
   },
   {
     id: 7,
-    name: "Ryan Brooks",
+    name: "Ryan Kevin",
     role: "Midfielder",
     image: "/images/player3.png",
     description:
@@ -77,7 +77,7 @@ const players = [
   },
   {
     id: 8,
-    name: "Ethan Hunt",
+    name: "Ethan Wanyama",
     role: "Defender",
     image: "/images/how-it-works2-bg.png",
     description:
@@ -86,7 +86,7 @@ const players = [
   },
   {
     id: 9,
-    name: "Leo Garcia",
+    name: "Leo Wanjala",
     role: "Forward",
     image: "/images/player3.png",
     description:
@@ -95,7 +95,7 @@ const players = [
   },
 ]
 
-// Modal Component
+// Modal Component (Unchanged)
 const PlayerModal = ({ player, onClose }) => {
   return (
     <motion.div
@@ -103,7 +103,7 @@ const PlayerModal = ({ player, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose} // Click on backdrop closes the modal
+      onClick={onClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -115,7 +115,7 @@ const PlayerModal = ({ player, onClose }) => {
         exit={{ scale: 0.9, opacity: 0, y: 30 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
         className="relative z-10 w-full max-w-md bg-white rounded-2xl overflow-hidden shadow-xl"
-        onClick={(e) => e.stopPropagation()} // Prevent content click from closing modal
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
@@ -129,7 +129,7 @@ const PlayerModal = ({ player, onClose }) => {
         {/* Player Image Area */}
         <div
           className="relative h-64 w-full"
-          style={{ backgroundColor: player.bg }} // Use player's card bg
+          style={{ backgroundColor: player.bg }}
         >
           <img
             src={player.image}
@@ -153,7 +153,6 @@ const PlayerModal = ({ player, onClose }) => {
   )
 }
 
-// Main Component
 const TalentsSection = React.memo(() => {
   const carouselRef = useRef(null)
   const [active, setActive] = useState(0)
@@ -224,13 +223,13 @@ const TalentsSection = React.memo(() => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: i * 0.06 }}
-                className="snap-center relative rounded-2xl overflow-hidden h-[420px] group cursor-pointer" // <-- ADDED cursor-pointer
+                className="snap-center relative rounded-2xl overflow-hidden h-[420px] group cursor-pointer" // <-- MODIFIED
                 style={{
                   backgroundColor: player.bg,
                 }}
                 role="button" // <-- ADDED for accessibility
                 tabIndex={0} // <-- ADDED for accessibility
-                onClick={() => setSelectedPlayer(player)} // <-- ADDED (card is clickable)
+                onClick={() => setSelectedPlayer(player)} // <-- ADDED
                 onKeyDown={(e) => {
                   // <-- ADDED for accessibility
                   if (e.key === "Enter" || e.key === " ") {
@@ -240,7 +239,7 @@ const TalentsSection = React.memo(() => {
                 }}
                 aria-label={`View details for ${player.name || player.caption} - ${
                   player.role || ""
-                }`}
+                }`} // <-- MODIFIED
               >
                 {/* Text content at the top */}
                 <div className={`p-6 relative z-10 ${player.text}`}>
@@ -274,7 +273,7 @@ const TalentsSection = React.memo(() => {
                 <button
                   aria-label={`View ${player.name || "player"}`}
                   onClick={(e) => {
-                    e.stopPropagation() // <-- Stop click from bubbling to card
+                    e.stopPropagation() // <-- ADDED: Stop click from bubbling to card
                     setSelectedPlayer(player)
                   }}
                   className={`absolute bottom-6 right-6 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg ${
@@ -290,7 +289,7 @@ const TalentsSection = React.memo(() => {
             ))}
           </div>
 
-          {/* Dots + Arrows in one line */}
+          {/* Dots + Arrows in one line (Unchanged) */}
           <div className="absolute left-0 right-0 bottom-0 translate-y-12 flex items-center justify-center px-6">
             {/* Dots center */}
             <div className="flex items-center space-x-2 bg-white/95 rounded-full px-4 py-2 shadow-md">
@@ -327,7 +326,7 @@ const TalentsSection = React.memo(() => {
         </div>
       </div>
 
-      {/* Modal Rendering */}
+      {/* Modal Rendering (Unchanged) */}
       <AnimatePresence>
         {selectedPlayer && (
           <PlayerModal
