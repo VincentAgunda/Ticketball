@@ -4,21 +4,23 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 
 // Color palette provided by user
 const cardColors = [
-  { bg: "#F5F5F7", text: "text-black", button: "dark" }, // Light Grey
+  { bg: "#000000", text: "text-white", button: "light" }, 
+  { bg: "#F5F5F7", text: "text-black", button: "dark" },
+  { bg: "#979797", text: "text-white", button: "light" },  // Light Grey
   { bg: "#fafafa", text: "text-black", button: "dark" }, // Dark Grey
-  { bg: "#000000", text: "text-white", button: "light" }, // Black
-  { bg: "#979797", text: "text-white", button: "light" }, 
+  // Black
+  
   // Medium Grey
 ]
 
 // Players data, now with colors assigned
 const players = [
-  { id: 1, name: "John Mark", role: "Forward", image: "/images/hero2.png", ...cardColors[0] },
-  { id: 2, name: "David Odhiambo", role: "Goalkeeper", image: "/images/player3.png", ...cardColors[1] },
-  { id: 3, name: "Chris Johnson", role: "Midfielder", image: "/images/how-it-works2-bg.png", ...cardColors[2] },
+  { id: 1, name: "John Mark", role: "Forward", image: "/images/player3.png", ...cardColors[0] },
+  { id: 2, name: "David Odhiambo", role: "Goalkeeper", image: "/images/hero2.png", ...cardColors[1] },
+  { id: 3, name: "Chris Johnson", role: "Midfielder", image: "/images/player3.png", ...cardColors[2] },
   { id: 4, name: "Michael Riss", role: "Defender", image: "/images/hero2.png", ...cardColors[3] },
   { id: 5, name: "Samuel King", role: "Winger", image: "/images/player3.png", ...cardColors[0] },
-  { id: 6, name: "Alex Carter", role: "Striker", image: "/images/how-it-works1-bg.png", ...cardColors[1] },
+  { id: 6, name: "Alex Carter", role: "Striker", image: "/images/how-it-works2-bg.png", ...cardColors[1] },
   { id: 7, name: "Ryan Brooks", role: "Midfielder", image: "/images/player3.png", ...cardColors[2] },
   { id: 8, name: "Alex Carter", role: "Striker", image: "/images/how-it-works2-bg.png", ...cardColors[1] },
   { id: 9, name: "Ryan Brooks", role: "Midfielder", image: "/images/player3.png", ...cardColors[2] },
