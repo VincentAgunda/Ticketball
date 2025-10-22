@@ -12,7 +12,7 @@ const appleFont = {
 const bgShades = [
   "bg-black text-white",
   "bg-white text-black",
-  "bg-[#f5f5f7] text-black",
+  "bg-[#555555] text-white",
   "bg-[#fafafa] text-black",
   "bg-[#fefefe] text-black",
 ]
@@ -38,7 +38,7 @@ const newsArticles = [
     id: 3,
     title: "Behind the Scenes.",
     subtitle: "Match Day Moments.",
-    image: "/images/calltoaction.png",
+    image: "/images/how-it-works2-bg.png",
     content:
       "Ever wondered what goes on before, during, and after a major football match? Our exclusive 'Behind the Scenes' look reveals the meticulous preparations, the intense locker room speeches, and the raw emotions that unfold on match day. From the ground staff ensuring a perfect pitch to the coaches fine-tuning their strategies, every detail contributes to the spectacle. Experience the adrenaline of the tunnel walk, the roar of the crowd, and the celebrations (or commiserations) after the final whistle.",
   },
@@ -54,7 +54,7 @@ const newsArticles = [
     id: 5,
     title: "Transfers 2025.",
     subtitle: "Big Moves Ahead.",
-    image: "/images/vin3.png",
+    image: "/images/football.png",
     content:
       "The transfer window for 2025 is already generating buzz, with rumors swirling about potential blockbuster moves that could reshape top teams. Clubs are strategizing to strengthen their squads, and players are looking for new challenges or lucrative contracts. Will a superstar forward switch allegiances? Will a promising midfielder make a surprise move? We analyze the financial implications, the tactical fits, and the ripple effects these transfers could have across the footballing landscape. Stay tuned for all the breaking news!",
   },
