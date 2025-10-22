@@ -14,6 +14,28 @@ import {
 } from "@mui/icons-material"
 import { motion, AnimatePresence } from "framer-motion"
 
+// --- START: Added Motion Variants for Mobile Menu ---
+// These variants create the smooth, staggered animation for the mobile drawer items
+const sidebarVariants = {
+  hidden: { x: "100%" },
+  visible: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+  exit: { x: "100%", transition: { type: "spring", stiffness: 300, damping: 30 } },
+}
+
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.07, delayChildren: 0.1 },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: 20 },
+  visible: { opacity: 1, x: 0 },
+}
+// --- END: Added Motion Variants ---
+
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -50,6 +72,7 @@ const Header = () => {
     try {
       await signOut()
       setUserMenuOpen(false)
+      setMobileMenuOpen(false) // Close mobile menu on sign out
     } catch (error) {
       console.error("Error signing out:", error)
     }
@@ -232,17 +255,37 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile Toggle */}
+          {/* --- START: Refactored Mobile Toggle --- */}
+          {/* This button now animates from a hamburger to an 'X' */}
           <button
-            className="md:hidden p-2 text-gray-700"
+            className="md:hidden relative w-8 h-8 flex flex-col justify-between items-center p-2 z-50"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <Close /> : <Menu />}
+            <span
+              className={`block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${
+                mobileMenuOpen
+                  ? "rotate-45 translate-y-[9px] bg-gray-800" // Use 9px for standard h-8
+                  : ""
+              }`}
+            />
+            <span
+              className={`block h-0.5 w-6 bg-gray-800 transition duration-300 ease-in-out ${
+                mobileMenuOpen ? "opacity-0" : ""
+              }`}
+            />
+            <span
+              className={`block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${
+                mobileMenuOpen
+                  ? "-rotate-45 -translate-y-[9px] bg-gray-800"
+                  : ""
+              }`}
+            />
           </button>
+          {/* --- END: Refactored Mobile Toggle --- */}
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* --- START: Refactored Mobile Drawer --- */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -256,59 +299,74 @@ const Header = () => {
             />
 
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              // Use the new sidebarVariants
+              variants={sidebarVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              // Add stopPropagation from target example
+              onClick={(e) => e.stopPropagation()}
               className="fixed inset-y-0 right-0 w-72 bg-white shadow-xl z-50 border-l border-gray-200 flex flex-col"
             >
+              {/* Simplified Header - removed redundant close button */}
               <div className="flex justify-between items-center p-4 border-b border-gray-200">
-                <span className="text-lg font-semibold text-gray-900">Menu</span>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-gray-700 hover:bg-gray-100 rounded-full"
-                >
-                  <Close />
-                </button>
+                <span className="text-lg font-bold text-gray-900">Menu</span>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+
+              {/* Apply listVariants for staggered animation */}
+              <motion.div
+                className="flex-1 overflow-y-auto px-4 py-3 space-y-1"
+                variants={listVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {/* Apply itemVariants to EACH link/button */}
                 {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      location.pathname === item.href
-                        ? "text-black"
-                        : "text-gray-700 hover:text-black hover:bg-gray-50"
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
+                  <motion.div key={item.name} variants={itemVariants}>
+                    <Link
+                      to={item.href}
+                      // Apply new "modern" styling (larger text, more padding)
+                      className={`block px-4 py-3 rounded-md text-lg font-medium ${
+                        location.pathname === item.href
+                          ? "text-black bg-gray-100"
+                          : "text-gray-700 hover:text-black hover:bg-gray-50"
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  </motion.div>
                 ))}
 
-                <button
-                  onClick={handleNewsClick}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
-                >
-                  News
-                </button>
+                <motion.div variants={itemVariants}>
+                  <button
+                    onClick={handleNewsClick}
+                    className="block w-full text-left px-4 py-3 rounded-md text-lg font-medium text-gray-700 hover:text-black hover:bg-gray-50"
+                  >
+                    News
+                  </button>
+                </motion.div>
 
                 {isAdmin && (
-                  <Link
-                    to="/ticket-scanner"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-800 hover:bg-gray-700"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <QrCodeScanner className="inline h-5 w-5 mr-2" />
-                    Ticket Scanner
-                  </Link>
+                  <motion.div variants={itemVariants}>
+                    <Link
+                      to="/ticket-scanner"
+                      className="block px-4 py-3 rounded-md text-lg font-medium text-white bg-gray-800 hover:bg-gray-700"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <QrCodeScanner className="inline h-5 w-5 mr-2" />
+                      Ticket Scanner
+                    </Link>
+                  </motion.div>
                 )}
 
-                <div className="border-t border-gray-200 pt-3">
+                <div className="border-t border-gray-200 pt-3 mt-3">
                   {user ? (
                     <>
-                      <div className="px-3 py-2 text-sm text-gray-900">
+                      <motion.div
+                        variants={itemVariants}
+                        className="px-3 py-2 text-sm text-gray-900"
+                      >
                         <div className="flex items-center space-x-2">
                           <AccountCircle />
                           <div>
@@ -322,52 +380,61 @@ const Header = () => {
                             )}
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
 
                       {isAdmin && (
-                        <Link
-                          to="/admin"
-                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <Dashboard className="inline h-5 w-5 mr-2" />
-                          Admin Dashboard
-                        </Link>
+                        <motion.div variants={itemVariants}>
+                          <Link
+                            to="/admin"
+                            className="block px-4 py-3 rounded-md text-lg font-medium text-gray-700 hover:bg-gray-50"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <Dashboard className="inline h-5 w-5 mr-2" />
+                            Admin Dashboard
+                          </Link>
+                        </motion.div>
                       )}
 
-                      <Link
-                        to="/my-tickets"
-                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <SportsSoccer className="inline h-5 w-5 mr-2" />
-                        My Tickets
-                      </Link>
+                      <motion.div variants={itemVariants}>
+                        <Link
+                          to="/my-tickets"
+                          className="block px-4 py-3 rounded-md text-lg font-medium text-gray-700 hover:bg-gray-50"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <SportsSoccer className="inline h-5 w-5 mr-2" />
+                          My Tickets
+                        </Link>
+                      </motion.div>
 
-                      <button
-                        onClick={handleSignOut}
-                        className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-gray-50"
-                      >
-                        <ExitToApp className="inline h-5 w-5 mr-2" />
-                        Sign Out
-                      </button>
+                      <motion.div variants={itemVariants}>
+                        <button
+                          onClick={handleSignOut}
+                          className="block w-full text-left px-4 py-3 rounded-md text-lg font-medium text-red-600 hover:bg-gray-50"
+                        >
+                          <ExitToApp className="inline h-5 w-5 mr-2" />
+                          Sign Out
+                        </button>
+                      </motion.div>
                     </>
                   ) : (
-                    <Link
-                      to="/login"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Login className="inline h-5 w-5 mr-2 text-gray-600" />
-                      Sign In
-                    </Link>
+                    <motion.div variants={itemVariants}>
+                      <Link
+                        to="/login"
+                        className="block px-4 py-3 rounded-md text-lg font-medium text-gray-700 hover:text-black hover:bg-gray-50"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Login className="inline h-5 w-5 mr-2 text-gray-600" />
+                        Sign In
+                      </Link>
+                    </motion.div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+      {/* --- END: Refactored Mobile Drawer --- */}
     </motion.header>
   )
 }

@@ -1,4 +1,3 @@
-// src/pages/public/Home.jsx
 import React, { useMemo, useRef, Suspense, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { SportsSoccer, ArrowUpward } from "@mui/icons-material"
@@ -137,12 +136,10 @@ const Home = () => {
 
   const nextMatch = upcomingMatches[0] || null
 
-  // Keep a single, short fade in on entry for hero container (lightweight)
+  // --- THIS IS THE NEW, COMBINED SCROLL LOGIC ---
+  // It handles both scrolling to top AND scrolling to a specific section
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" })
-  }, [])
-
-  useEffect(() => {
+    // Check if we need to scroll to a specific section (e.g., "news")
     if (location?.state?.target === "news") {
       // robust scroll attempt, but keep light
       let attempts = 0
@@ -151,6 +148,7 @@ const Home = () => {
         const el = document.getElementById("news-section")
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "start" })
+          // Clear the state to prevent this on back/forward navigation
           navigate(location.pathname, { replace: true, state: {} })
           return true
         }
@@ -162,21 +160,15 @@ const Home = () => {
         }, 50)
         return () => clearInterval(interval)
       }
+    } else {
+      // DEFAULT: If not scrolling to a section, scroll to the top
+      window.scrollTo({ top: 0, behavior: "auto" })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location?.state?.target])
+    // This hook now runs on every location change
+  }, [location, navigate]) 
+  // --- END OF NEW SCROLL LOGIC ---
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <PageLoader />
-      </div>
-    )
-  }
-
-  if (error) {
-    return <div className="text-center text-red-600 p-8">Error loading matches: {String(error)}</div>
-  }
+  // --- (The old useEffect blocks for scrolling were removed) ---
 
   return (
     <div className="bg-white text-[#0B1B32] space-y-20 font-sans antialiased">
@@ -211,9 +203,20 @@ const Home = () => {
           <div className="rounded-2xl p-6 bg-white shadow-xl border border-gray-100">
             <div className="flex items-center space-x-3 mb-4">
               <SportsSoccer className="h-7 w-7 text-[#0B1B32]" />
-              <h3 className="text-xl font-semibold text-[#0B1B32]">{nextMatch ? "Next Big Match" : "No Upcoming Matches"}</h3>
+              <h3 className="text-xl font-semibold text-[#0B1B32]">
+                {loading ? "Loading Next Match..." : (nextMatch ? "Next Big Match" : "No Upcoming Matches")}
+              </h3>
             </div>
-            {nextMatch ? (
+            
+            {loading ? (
+              <div className="h-32 flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
+                <p className="text-gray-500">Loading...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-red-500">
+                <p>Could not load match data.</p>
+              </div>
+            ) : nextMatch ? (
               <MatchCard match={nextMatch} variant="compact" />
             ) : (
               <div className="text-center py-8 text-gray-600">
@@ -240,7 +243,13 @@ const Home = () => {
           <Link to="/matches" className="text-[#83A6CE] hover:text-[#6d8db4] font-medium">View All</Link>
         </div>
 
-        {upcomingMatches.length > 0 ? (
+        {loading ? (
+          <div className="min-h-40 flex items-center justify-center">
+            <PageLoader />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-600 p-8">Error loading matches: {String(error)}</div>
+        ) : upcomingMatches.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingMatches.map((match) => (
               <div key={match.id} className="match-card-wrapper">
