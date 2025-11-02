@@ -289,7 +289,7 @@ const TicketQR = ({
 
           <div className="flex justify-between">
             <span className="flex items-center space-x-2">
-              <span>💰</span>
+              <span></span>
               <span>Price:</span>
             </span>
             <span className="font-semibold text-white">{formatCurrency(price)}</span>

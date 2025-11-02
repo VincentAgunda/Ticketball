@@ -1,10 +1,18 @@
-// src/components/CallToAction.jsx
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 
 const CallToAction = () => {
   const [open, setOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const ref = useRef(null)
+
+  // Detect screen size
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
   // Track scroll progress for 3D motion
   const { scrollYProgress } = useScroll({
@@ -12,7 +20,7 @@ const CallToAction = () => {
     offset: ["start end", "center start"],
   })
 
-  // Transform values — no opacity now
+  // Transform values (only for desktop)
   const scale = useTransform(scrollYProgress, [0, 1], [0.9, 1])
   const rotateX = useTransform(scrollYProgress, [0, 1], [15, 0])
   const y = useTransform(scrollYProgress, [0, 1], [100, 0])
@@ -40,15 +48,19 @@ const CallToAction = () => {
         }}
       />
 
-      {/* Main 3D Section */}
+      {/* Main Section (static on mobile, 3D on desktop) */}
       <motion.div
-        style={{
-          scale,
-          rotateX,
-          y,
-          transformStyle: "preserve-3d",
-          willChange: "transform",
-        }}
+        style={
+          isMobile
+            ? {} // no animation on mobile
+            : {
+                scale,
+                rotateX,
+                y,
+                transformStyle: "preserve-3d",
+                willChange: "transform",
+              }
+        }
         className="relative grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-8 py-24 bg-white/60 backdrop-blur-lg rounded-3xl"
       >
         {/* Left Content */}
@@ -61,40 +73,31 @@ const CallToAction = () => {
           </p>
           <button
             onClick={() => setOpen(true)}
-            className="bg-black text-white px-8 py-3 rounded-full font-medium shadow-lg hover:scale-105 transition-transform duration-200"
+            className="bg-black text-white px-8 py-3 rounded-full font-medium shadow-lg"
           >
             Partner with us
           </button>
         </div>
 
-        {/* Right Floating Image */}
+        {/* Right Static Image */}
         <div className="flex justify-center lg:justify-end">
-          <motion.img
+          <img
             src="/images/calltoaction.png"
             alt="Promo"
             className="w-80 h-80 object-contain drop-shadow-2xl"
-            animate={{ y: [0, -20, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            style={{ willChange: "transform" }}
           />
         </div>
       </motion.div>
 
-      {/* Floating Action Button */}
-      <motion.div
-        className="absolute bottom-6 left-6"
-        initial={{ y: 40 }}
-        whileInView={{ y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
+      {/* Static Action Button (no animation) */}
+      <div className="absolute bottom-6 left-6">
         <button
           onClick={() => setOpen(true)}
-          className="bg-black text-white px-6 py-3 rounded-full shadow-lg hover:scale-105 transition-transform duration-200"
+          className="bg-black text-white px-6 py-3 rounded-full shadow-lg"
         >
           Action
         </button>
-      </motion.div>
+      </div>
 
       {/* Modal */}
       <AnimatePresence>
@@ -151,13 +154,13 @@ const CallToAction = () => {
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-lg bg-black text-white font-medium hover:opacity-90"
+                    className="px-6 py-2 rounded-lg bg-black text-white font-medium"
                   >
                     Submit
                   </button>

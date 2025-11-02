@@ -14,12 +14,15 @@ import {
 } from "@mui/icons-material"
 import { motion, AnimatePresence } from "framer-motion"
 
-// --- START: Added Motion Variants for Mobile Menu ---
-// These variants create the smooth, staggered animation for the mobile drawer items
+// --- START: Modified Motion Variants for Mobile Menu ---
+
+// MODIFICATION 1:
+// Changed transition from a 'spring' to a 'tween' (easeOut/easeIn).
+// This feels "snappier" and less "bouncy," which can be perceived as less laggy.
 const sidebarVariants = {
   hidden: { x: "100%" },
-  visible: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
-  exit: { x: "100%", transition: { type: "spring", stiffness: 300, damping: 30 } },
+  visible: { x: 0, transition: { type: "tween", ease: "easeOut", duration: 0.3 } },
+  exit: { x: "100%", transition: { type: "tween", ease: "easeIn", duration: 0.3 } },
 }
 
 const listVariants = {
@@ -30,11 +33,14 @@ const listVariants = {
   },
 }
 
+// MODIFICATION 2:
+// Changed animation from horizontal (x) to vertical (y).
+// This stops the item animation from "fighting" the drawer's horizontal slide-in.
 const itemVariants = {
-  hidden: { opacity: 0, x: 20 },
-  visible: { opacity: 1, x: 0 },
+  hidden: { opacity: 0, y: 20 }, // Was x: 20
+  visible: { opacity: 1, y: 0 }, // Was x: 0
 }
-// --- END: Added Motion Variants ---
+// --- END: Modified Motion Variants ---
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -299,7 +305,7 @@ const Header = () => {
             />
 
             <motion.div
-              // Use the new sidebarVariants
+              // Use the modified sidebarVariants
               variants={sidebarVariants}
               initial="hidden"
               animate="visible"
